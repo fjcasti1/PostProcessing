@@ -45,10 +45,10 @@ OUT_DIR = f'dat/{res_dir:s}'
 #print(f)
 ################################
 
-def ts_basename(f):
+def long_basename(f):
   return f.split('/')[-1]
 
-def shorten_basename(f):
+def ts_basename(f):
   return f.split('_TU')[0]
 
 def fft_basename(f):
@@ -61,13 +61,13 @@ def parse_token(bn,token):
   return bn.split(token)[1].split('_')[0]
   
 def main(f,dtinput):
-  tsbn    = ts_basename(f)
+  longbn  = long_basename(f)
+  tsbn    = ts_basename(longbn)
   fftbn   = fft_basename(tsbn)
   orbitbn = orbit_basename(tsbn)
-  shortbn = shorten_basename(tsbn)
   tokens  = ['Re','Bo','alpha','f','TU'] 
   try:
-    values = [ parse_token(tsbn,token) for token in tokens ]
+    values = [ parse_token(longbn,token) for token in tokens ]
     Re   = values[0]
     Bo   = values[1]
     alpha= values[2]
@@ -86,7 +86,7 @@ def main(f,dtinput):
     Nsteps = float(TU/dt)
   w = 2*pi*float(freq)
 
-  title_string = tsbn.replace('_',' ')
+  title_string = longbn.replace('_',' ')
   t,Ek,Eg,Ew,ur,uw,uz = loadtxt(f).T
   os.makedirs(FIG_DIR,exist_ok=True)
 
