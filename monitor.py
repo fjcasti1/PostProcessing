@@ -1,13 +1,4 @@
 #!/usr/bin/env python
-#from hellaPy import *
-#from numpy import *
-#from pylab import *
-#from matplotlib import pyplot as plt
-#from matplotlib import gridspec as gridspec
-#from mpl_toolkits.mplot3d import axes3d
-#from scipy.signal import blackman as blk
-#import os,sys,natsort,glob,multiprocessing,math
-
 from numpy import *
 from pylab import detrend,fft,savefig
 from matplotlib import pyplot as plt
