@@ -27,18 +27,18 @@ trapped() {
 }
 
 pMovieMaker() {
-  Bo="${1:?'BOUSSINESQ VAL MISSING'}"
+  MODE="${1:?'MODE OPT MISSING'}"
   Re="${2:?'REYNOLDS VAL MISSING'}"
-  alpha="${3:?'ALPHA VAL MISSING'}"
-  freq="${4:?'FORCING FREQ VAL MISSING'}"
-  TU="${5:?'TIME UNITS MISSING'}"
-  runs="${6:?'RUNS UNIT MISSING'}"
-  field="${7:?'FIELD VAL MISSING'}"
-  IMA="${8:?'IMA VAL MISSING'}"
-  GMA="${9:?'GMA VAL MISSING'}"
-  pertIMA="${10:?'PERT IMA VAL MISSING'}"
-  pertGMA="${11:?'TIME UNITS MISSING'}"
-  MODE="${12:?'MODE OPT MISSING'}"
+  Bo="${3:?'BOUSSINESQ VAL MISSING'}"
+  alpha="${4:?'ALPHA VAL MISSING'}"
+  freq="${5:?'FORCING FREQ VAL MISSING'}"
+  restartPath="${6:?'RESTART PATH MISSING'}"
+  TU="${7:?'TIME UNITS MISSING'}"
+  field="${8:?'FIELD VAL MISSING'}"
+  IMA="${9:?'IMA VAL MISSING'}"
+  GMA="${10:?'GMA VAL MISSING'}"
+  pertIMA="${11:?'PERT IMA VAL MISSING'}"
+  pertGMA="${12:?'PERT GMA MISSING'}"
   outPath="${13:-"movies"}"
 
   srcPath="src/PostProcessing/flowFieldPlot.py"
@@ -50,7 +50,6 @@ pMovieMaker() {
 
   if [ ${MODE} == "PROBEMODE" ]; then
     echo "PROBING:"
-    restartPath="alpha${alpha}/runs_${runs}/Bo${Bo}/"
     restartName="Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_0*"
     pycmdBody=("${restartPath}${restartName}" auto)
     flags="${field} ${IMA} ${GMA} ${pertIMA} ${pertGMA}"
@@ -58,7 +57,6 @@ pMovieMaker() {
     python ${srcPath} "${pycmdBody[@]}" ${flags} ${MODE}
   elif [ ${MODE} == "PLOTMODE" ] || [ ${MODE} == "MOVIEMODE" ]; then
     echo "CREATING FRAMES:"
-    restartPath="alpha${alpha}/runs_${runs}/Bo${Bo}/"
     restartName="Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_0*"
     pycmdBody=("${restartPath}${restartName}" auto)
     flags="${field} ${IMA} ${GMA} ${pertIMA} ${pertGMA}"
@@ -83,17 +81,17 @@ pMovieMaker() {
 
 my_job() {
   MODE="${1:?'MODE OPT MISSING 1'}"
-  Bo="${2:?'BOUSSINESQ VAL MISSING'}"
-  Re="${3:?'REYNOLDS VAL MISSING'}"
+  Re="${2:?'REYNOLDS VAL MISSING'}"
+  Bo="${3:?'BOUSSINESQ VAL MISSING'}"
   alpha="${4:?'ALPHA VAL MISSING'}"
   freq="${5:?'FORCING FREQ VAL MISSING'}"
-  TU="${6:?'TIME UNITS MISSING'}"
-  runs="${7:?'RUNS UNIT MISSING'}"
+  restartPath="${6:?'RESTART PATH MISSING'}"
+  TU="${7:?'TIME UNITS MISSING'}"
   field="${8:?'FIELD VAL MISSING'}"
   IMA="${9:?'IMA VAL MISSING'}"
   GMA="${10:?'GMA VAL MISSING'}"
   pertIMA="${11:?'PERT IMA VAL MISSING'}"
-  pertGMA="${12:?'TIME UNITS MISSING'}"
+  pertGMA="${12:?'PERT GMA VAL MISSING'}"
   res_dir="${13:-"../../movies/"}"
 
   prefix="Re${Re}_Bo${Bo}_alpha${alpha}_f${MODE}_TU${TU}"
@@ -102,7 +100,7 @@ my_job() {
    
   printf "Plotting ${field} field of the solution: ${prefix}\n"
 #  src/PostProcessing/pMovieMaker.sh $Bo $Re $alpha $freq $TU $runs $field $IMA $GMA $pertIMA $pertGMA $MODE
-  pMovieMaker $Bo $Re $alpha $freq $TU $runs $field $IMA $GMA $pertIMA $pertGMA $MODE
+  pMovieMaker $MODE $Re $Bo $alpha $freq $restartPath $TU $field $IMA $GMA $pertIMA $pertGMA 
   if [ "${MODE}" == "PROBEMODE" ]; then
     inawkfile="${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_bounds.dat"
     outawkfile="${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_boundstotal.dat"
