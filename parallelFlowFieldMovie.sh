@@ -99,7 +99,6 @@ my_job() {
   ! [[ -d "$res_dir" ]] && mkdir -p "$res_dir" || :
    
   printf "Plotting ${field} field of the solution: ${prefix}\n"
-#  src/PostProcessing/pMovieMaker.sh $Bo $Re $alpha $freq $TU $runs $field $IMA $GMA $pertIMA $pertGMA $MODE
   pMovieMaker $MODE $Re $Bo $alpha $freq $restartPath $TU $field $IMA $GMA $pertIMA $pertGMA 
   if [ "${MODE}" == "PROBEMODE" ]; then
     inawkfile="${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_bounds.dat"
