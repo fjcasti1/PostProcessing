@@ -104,15 +104,13 @@ my_job() {
     inawkfile="${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_bounds.dat"
     outawkfile="${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_boundstotal.dat"
     if [ -f ${inawkfile} ]; then
-#      src/PostProcessing/igMAX.awk ${inawkfile} >> temp.dat
       src/PostProcessing/igMAX.awk ${inawkfile} >> $outawkfile
+      src/PostProcessing/igMAX.awk ${inawkfile} >> testing.dat
       rm ${inawkfile}
     fi
-#    igMAX.awk ${inawkfile} >> temp.dat
     inawkfile_pert="${field}_pert_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_bounds.dat"
     outawkfile_pert="${field}_pert_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_boundstotal.dat"
     if [ -f ${inawkfile_pert} ]; then
-#     src/PostProcessing/igMAX.awk ${inawkfile_pert} >> temp.dat
       src/PostProcessing/igMAX.awk ${inawkfile_pert} >> $outawkfile_pert
       rm ${inawkfile_pert}
     fi
