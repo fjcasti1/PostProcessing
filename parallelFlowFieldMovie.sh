@@ -104,34 +104,29 @@ my_job() {
     inawkfile="${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_bounds.dat"
     outawkfile="${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_boundstotal.dat"
     if [ -f ${inawkfile} ]; then
-      src/PostProcessing/igMAX.awk ${inawkfile} >> $outawkfile
+      src/PostProcessing/igMAX.awk -v restartPath="$restartPath" ${inawkfile} >> $outawkfile
       rm ${inawkfile}
     fi
     inawkfile_pert="${field}_pert_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_bounds.dat"
     outawkfile_pert="${field}_pert_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_boundstotal.dat"
     if [ -f ${inawkfile_pert} ]; then
-      src/PostProcessing/igMAX.awk ${inawkfile_pert} >> $outawkfile_pert
+      src/PostProcessing/igMAX.awk -v restartPath="$restartPath" ${inawkfile_pert} >> $outawkfile_pert
       rm ${inawkfile_pert}
     fi
     echo "Creating header of bounds.dat"
     pycmd=$HOME/.local/opt/anaconda/bin/python
     $pycmd <<__EOF > bounds.dat
-FILENAME = "FILENAME"
-IMA      = "IMA"
-IMAavg   = "IMAavg"
-GMA      = "GMA"
-GMAavg   = "GMAavg"
-N        = "N"
-print(f'# {"":=<132s} #')
-print(f'#{FILENAME:^50s}{IMA:>21s}{IMAavg:>16s}{GMA:>15s}{GMAavg:>18s}{N:>8s}      #')
-print(f'# {"":=<132s} #')
+FILENAME    = "FILENAME"
+RESTARTPATH = "RESTARTPATH"
+IMA         = "IMA"
+IMAavg      = "IMAavg"
+GMA         = "GMA"
+GMAavg      = "GMAavg"
+N           = "N"
+print(f'# {"":=<161s} #')
+print(f'#{FILENAME:^50s}{RESTARTPATH:>33s}{IMA:>20s}{IMAavg:>16s}{GMA:>15s}{GMAavg:>18s}{N:>8s}   #')
+print(f'# {"":=<161s} #')
 __EOF
-    
-#    if [ -f temp.dat ]; then
-#    echo "Sorting:"
-#    sort temp.dat | uniq >> bounds.dat
-#    fi
-#    igMAX.awk ${inawkfile_pert} >> temp.dat
   fi
 }
 
