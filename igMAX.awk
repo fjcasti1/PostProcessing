@@ -19,6 +19,6 @@ NF > 0{
 END{
   imaAVG=imaAVG/NR
   gmaAVG=gmaAVG/NR
-  printf "%-60s\t %.8e\t %.8e\t %.8e\t %.8e\t %d\n", FILENAME, ima, imaAVG, gma, gmaAVG, NR
+  printf "%-60s\t %-13s\t %.8e\t %.8e\t %.8e\t %.8e\t %d\n", FILENAME, restartPah, ima, imaAVG, gma, gmaAVG, NR
 }
 
