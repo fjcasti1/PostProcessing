@@ -105,7 +105,6 @@ my_job() {
     outawkfile="${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_boundstotal.dat"
     if [ -f ${inawkfile} ]; then
       src/PostProcessing/igMAX.awk ${inawkfile} >> $outawkfile
-      src/PostProcessing/igMAX.awk ${inawkfile} >> testing.dat
       rm ${inawkfile}
     fi
     inawkfile_pert="${field}_pert_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_bounds.dat"
