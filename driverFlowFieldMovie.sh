@@ -23,6 +23,10 @@ srcFile=src/PostProcessing/parallelFlowFieldMovie.sh
 
 parallel bash ${srcFile} {} ${MODE} '0' 'MovieGen' ::: ${inputFiles} 
 
+if [[ $inputFiles != *00 ]]; then
+  exit 0
+fi
+
 if [ $MODE == "PROBEMODE" ]; then
   while [[ $(squeue -u fjcasti1 | wc -l) -gt "1" ]]
   do
