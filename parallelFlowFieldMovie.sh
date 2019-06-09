@@ -28,7 +28,7 @@ trapped() {
 
 pMovieMaker() {
   MODE="${1:?'MODE OPT MISSING'}"
-  Re="${2:?'REYNOLDS pmov VAL MISSING'}"
+  Re="${2:?'REYNOLDS VAL MISSING'}"
   Bo="${3:?'BOUSSINESQ VAL MISSING'}"
   alpha="${4:?'ALPHA VAL MISSING'}"
   freq="${5:?'FORCING FREQ VAL MISSING'}"
@@ -42,7 +42,6 @@ pMovieMaker() {
   outPath="${13:-"movies"}"
 
   srcPath="src/PostProcessing/flowFieldPlot.py"
-  destMachine="somss11:/home/castillo/Documents/ASU/RESEARCH/generalKnifeEdge/MOVIES/"
   framerate=50
 
   ffcmd0="-hide_banner -loglevel panic -framerate ${framerate} -i"
