@@ -28,7 +28,7 @@ trapped() {
 
 pMovieMaker() {
   MODE="${1:?'MODE OPT MISSING'}"
-  Re="${2:?'REYNOLDS VAL MISSING'}"
+  Re="${2:?'REYNOLDS pmov VAL MISSING'}"
   Bo="${3:?'BOUSSINESQ VAL MISSING'}"
   alpha="${4:?'ALPHA VAL MISSING'}"
   freq="${5:?'FORCING FREQ VAL MISSING'}"
@@ -42,7 +42,7 @@ pMovieMaker() {
   outPath="${13:-"movies"}"
 
   srcPath="src/PostProcessing/flowFieldPlot.py"
-  destMachine="somss11"
+  destMachine="somss11:/home/castillo/Documents/ASU/RESEARCH/generalKnifeEdge/MOVIES/"
   framerate=50
 
   ffcmd0="-hide_banner -loglevel panic -framerate ${framerate} -i"
@@ -70,8 +70,6 @@ pMovieMaker() {
         movName="${outPath}/${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}.mp4"
         ffcmdbody=(${imgsPath}${imgsName} ${movName})
         ffmpeg $ffcmd0 ${ffcmdbody[@]}
-        scpbody="${movName} ${destMachine}:/home/castillo/Documents/RESEARCH/MOVIES/"
-        scp ${scpbody}
       done
     fi
   else 
@@ -113,20 +111,6 @@ my_job() {
       src/PostProcessing/igMAX.awk -v restartPath="$restartPath" ${inawkfile_pert} >> $outawkfile_pert
       rm ${inawkfile_pert}
     fi
-    echo "Creating header of bounds.dat"
-    pycmd=$HOME/.local/opt/anaconda/bin/python
-    $pycmd <<__EOF > bounds.dat
-FILENAME    = "FILENAME"
-RESTARTPATH = "RESTARTPATH"
-IMA         = "IMA"
-IMAavg      = "IMAavg"
-GMA         = "GMA"
-GMAavg      = "GMAavg"
-N           = "N"
-print(f'# {"":=<161s} #')
-print(f'#{FILENAME:^50s}{RESTARTPATH:>33s}{IMA:>20s}{IMAavg:>16s}{GMA:>15s}{GMAavg:>18s}{N:>8s}   #')
-print(f'# {"":=<161s} #')
-__EOF
   fi
 }
 
