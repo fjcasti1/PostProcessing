@@ -19,12 +19,35 @@ fi
 inputFiles=${1:?'INPUT FILES NOT PROVIDED'}
 MODE=${2:?'MODE NOT PROVIDED'}
 
+outFile="bounds.dat"
+path="$(dirname $inputFiles)"
 srcFile=src/PostProcessing/parallelFlowFieldMovie.sh
 
-parallel bash ${srcFile} {} ${MODE} '0' 'MovieGen' ::: ${inputFiles} 
+probeMode() {
+  if [[ $inputFiles == *00 ]]; then
+    echo "Creating header of $outFile"
+    pycmd=$HOME/.local/opt/anaconda/bin/python
+    $pycmd <<__EOF > $outFile
+FILENAME    = "FILENAME"
+RESTARTPATH = "RESTARTPATH"
+IMA         = "IMA"
+IMAavg      = "IMAavg"
+GMA         = "GMA"
+GMAavg      = "GMAavg"
+N           = "N"
+print(f'# {"":=<161s} #')
+print(f'#{FILENAME:^50s}{RESTARTPATH:>33s}{IMA:>20s}{IMAavg:>16s}{GMA:>15s}{GMAavg:>18s}{N:>8s}   #')
+print(f'# {"":=<161s} #')
+__EOF
+  fi
 
-if [ $MODE == "PROBEMODE" ]; then
-  while [[ $(squeue -u fjcasti1 | wc -l) -gt "1" ]]
+  parallel bash ${srcFile} {} ${MODE} '0' 'MovieGen' ::: ${inputFiles} 
+  
+  if [[ $inputFiles != *00 ]]; then
+    exit 0
+  fi
+  
+  while [[ $(squeue -u fjcasti1 | wc -l) -gt "2" ]]
   do
     sleep 5s  
   done
@@ -34,11 +57,20 @@ if [ $MODE == "PROBEMODE" ]; then
     cat $filename >> temp.dat
     rm $filename
   done
-  sort temp.dat >> bounds.dat
+  sort temp.dat >> $outFile
   rm temp.dat
   echo " "
-  echo "The file bounds.dat has $(wc -l < bounds.dat) lines"
+  echo "The file $outFile has $(wc -l < $outFile) lines"
+  echo "Moving $outFile to $path/"
+  mv $outFile "$path/"
   echo "FINISHED IN $MODE"
+}
+
+export -f probeMode
+
+if [ $MODE == "PROBEMODE" ]; then
+  probeMode
 else
+  parallel bash ${srcFile} {} ${MODE} '0' 'MovieGen' ::: ${inputFiles} 
   echo "JOBS SUBMITTED IN $MODE"
 fi

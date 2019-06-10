@@ -33,7 +33,7 @@ autoOUT_DIR='movies/'
 EPS=0.15  # Percentage of domain that is left for each wall
 
 #OUT_FILE_TYPE = OREC = orec  = 'pdf'
-OUT_FILE_TYPE = OREC = orec  = 'png'
+OUT_FILE_TYPE = 'png'
 
 #                      # Paint Domain | Paint Range
 ALL_CMAP     = mycm19  #    [-a, a]   | dark blue to dark red
@@ -103,10 +103,10 @@ def get_files_to_plot():
       sys.exit(1)
   frecs=[]
   for drec in drecs:
-    if isPlotted(drec):     # Check if they have been plotted already
-      print('FILE ',drec, 'ALREADY PLOTTED')
-    else:
-      frecs.append(drec)
+    #if isPlotted(drec):     # Check if they have been plotted already
+    #  print('FILE ',drec, 'ALREADY PLOTTED')
+    #else:
+    frecs.append(drec)
   drecs = frecs
   drecs.sort()
   return drecs 
@@ -189,6 +189,8 @@ def reader(f,fmean=0,label=''):
 
 def mycf(X1,X2,Q,out_fig,ima=1,gma=400,fn=10,ax=0.):
   f,a = no_ax_fax(k=fn,fs_base=6)
+  if ima == gma:
+    gma = gma*1.0001
   mycontourf(X1,X2,Q,levels=linspace(-gma,-ima,3 ),cmap=NEG_EXT_CMAP)
   mycontourf(X1,X2,Q,levels=linspace(-ima, ima,15),cmap=INT_CMAP    )
   mycontourf(X1,X2,Q,levels=linspace( ima, gma,3 ),cmap=POS_EXT_CMAP)

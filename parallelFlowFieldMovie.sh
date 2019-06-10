@@ -27,22 +27,21 @@ trapped() {
 }
 
 pMovieMaker() {
-  Bo="${1:?'BOUSSINESQ VAL MISSING'}"
+  MODE="${1:?'MODE OPT MISSING'}"
   Re="${2:?'REYNOLDS VAL MISSING'}"
-  alpha="${3:?'ALPHA VAL MISSING'}"
-  freq="${4:?'FORCING FREQ VAL MISSING'}"
-  TU="${5:?'TIME UNITS MISSING'}"
-  runs="${6:?'RUNS UNIT MISSING'}"
-  field="${7:?'FIELD VAL MISSING'}"
-  IMA="${8:?'IMA VAL MISSING'}"
-  GMA="${9:?'GMA VAL MISSING'}"
-  pertIMA="${10:?'PERT IMA VAL MISSING'}"
-  pertGMA="${11:?'TIME UNITS MISSING'}"
-  MODE="${12:?'MODE OPT MISSING'}"
+  Bo="${3:?'BOUSSINESQ VAL MISSING'}"
+  alpha="${4:?'ALPHA VAL MISSING'}"
+  freq="${5:?'FORCING FREQ VAL MISSING'}"
+  restartPath="${6:?'RESTART PATH MISSING'}"
+  TU="${7:?'TIME UNITS MISSING'}"
+  field="${8:?'FIELD VAL MISSING'}"
+  IMA="${9:?'IMA VAL MISSING'}"
+  GMA="${10:?'GMA VAL MISSING'}"
+  pertIMA="${11:?'PERT IMA VAL MISSING'}"
+  pertGMA="${12:?'PERT GMA MISSING'}"
   outPath="${13:-"movies"}"
 
   srcPath="src/PostProcessing/flowFieldPlot.py"
-  destMachine="somss11"
   framerate=50
 
   ffcmd0="-hide_banner -loglevel panic -framerate ${framerate} -i"
@@ -50,7 +49,6 @@ pMovieMaker() {
 
   if [ ${MODE} == "PROBEMODE" ]; then
     echo "PROBING:"
-    restartPath="alpha${alpha}/runs_${runs}/Bo${Bo}/"
     restartName="Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_0*"
     pycmdBody=("${restartPath}${restartName}" auto)
     flags="${field} ${IMA} ${GMA} ${pertIMA} ${pertGMA}"
@@ -58,7 +56,6 @@ pMovieMaker() {
     python ${srcPath} "${pycmdBody[@]}" ${flags} ${MODE}
   elif [ ${MODE} == "PLOTMODE" ] || [ ${MODE} == "MOVIEMODE" ]; then
     echo "CREATING FRAMES:"
-    restartPath="alpha${alpha}/runs_${runs}/Bo${Bo}/"
     restartName="Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_0*"
     pycmdBody=("${restartPath}${restartName}" auto)
     flags="${field} ${IMA} ${GMA} ${pertIMA} ${pertGMA}"
@@ -72,8 +69,6 @@ pMovieMaker() {
         movName="${outPath}/${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}.mp4"
         ffcmdbody=(${imgsPath}${imgsName} ${movName})
         ffmpeg $ffcmd0 ${ffcmdbody[@]}
-        scpbody="${movName} ${destMachine}:/home/castillo/Documents/RESEARCH/MOVIES/"
-        scp ${scpbody}
       done
     fi
   else 
@@ -83,17 +78,17 @@ pMovieMaker() {
 
 my_job() {
   MODE="${1:?'MODE OPT MISSING 1'}"
-  Bo="${2:?'BOUSSINESQ VAL MISSING'}"
-  Re="${3:?'REYNOLDS VAL MISSING'}"
+  Re="${2:?'REYNOLDS VAL MISSING'}"
+  Bo="${3:?'BOUSSINESQ VAL MISSING'}"
   alpha="${4:?'ALPHA VAL MISSING'}"
   freq="${5:?'FORCING FREQ VAL MISSING'}"
-  TU="${6:?'TIME UNITS MISSING'}"
-  runs="${7:?'RUNS UNIT MISSING'}"
+  restartPath="${6:?'RESTART PATH MISSING'}"
+  TU="${7:?'TIME UNITS MISSING'}"
   field="${8:?'FIELD VAL MISSING'}"
   IMA="${9:?'IMA VAL MISSING'}"
   GMA="${10:?'GMA VAL MISSING'}"
   pertIMA="${11:?'PERT IMA VAL MISSING'}"
-  pertGMA="${12:?'TIME UNITS MISSING'}"
+  pertGMA="${12:?'PERT GMA VAL MISSING'}"
   res_dir="${13:-"../../movies/"}"
 
   prefix="Re${Re}_Bo${Bo}_alpha${alpha}_f${MODE}_TU${TU}"
@@ -101,43 +96,20 @@ my_job() {
   ! [[ -d "$res_dir" ]] && mkdir -p "$res_dir" || :
    
   printf "Plotting ${field} field of the solution: ${prefix}\n"
-#  src/PostProcessing/pMovieMaker.sh $Bo $Re $alpha $freq $TU $runs $field $IMA $GMA $pertIMA $pertGMA $MODE
-  pMovieMaker $Bo $Re $alpha $freq $TU $runs $field $IMA $GMA $pertIMA $pertGMA $MODE
+  pMovieMaker $MODE $Re $Bo $alpha $freq $restartPath $TU $field $IMA $GMA $pertIMA $pertGMA 
   if [ "${MODE}" == "PROBEMODE" ]; then
     inawkfile="${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_bounds.dat"
     outawkfile="${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_boundstotal.dat"
     if [ -f ${inawkfile} ]; then
-#      src/PostProcessing/igMAX.awk ${inawkfile} >> temp.dat
-      src/PostProcessing/igMAX.awk ${inawkfile} >> $outawkfile
+      src/PostProcessing/igMAX.awk -v restartPath="$restartPath" ${inawkfile} >> $outawkfile
       rm ${inawkfile}
     fi
-#    igMAX.awk ${inawkfile} >> temp.dat
     inawkfile_pert="${field}_pert_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_bounds.dat"
     outawkfile_pert="${field}_pert_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_boundstotal.dat"
     if [ -f ${inawkfile_pert} ]; then
-#     src/PostProcessing/igMAX.awk ${inawkfile_pert} >> temp.dat
-      src/PostProcessing/igMAX.awk ${inawkfile_pert} >> $outawkfile_pert
+      src/PostProcessing/igMAX.awk -v restartPath="$restartPath" ${inawkfile_pert} >> $outawkfile_pert
       rm ${inawkfile_pert}
     fi
-    echo "Creating header of bounds.dat"
-    pycmd=$HOME/.local/opt/anaconda/bin/python
-    $pycmd <<__EOF > bounds.dat
-FILENAME = "FILENAME"
-IMA      = "IMA"
-IMAavg   = "IMAavg"
-GMA      = "GMA"
-GMAavg   = "GMAavg"
-N        = "N"
-print(f'# {"":=<132s} #')
-print(f'#{FILENAME:^50s}{IMA:>21s}{IMAavg:>16s}{GMA:>15s}{GMAavg:>18s}{N:>8s}      #')
-print(f'# {"":=<132s} #')
-__EOF
-    
-#    if [ -f temp.dat ]; then
-#    echo "Sorting:"
-#    sort temp.dat | uniq >> bounds.dat
-#    fi
-#    igMAX.awk ${inawkfile_pert} >> temp.dat
   fi
 }
 
