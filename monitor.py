@@ -1,10 +1,12 @@
 #!/usr/bin/env python
-from numpy import *
+import sys
+from os import path, makedirs
+from numpy import pi, loadtxt
 from pylab import detrend,fft,savefig
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 from scipy.signal import blackman as blk
-import os,sys
+import pandas as pd
 
 ## TO USE LATEX IN LABELS
 #from matplotlib import rc
@@ -31,17 +33,7 @@ def fig_dir(f):
   return f'fig/'
 
 FIG_DIR = fig_dir(res_dir)
-OUT_DIR = f'dat/{res_dir:s}'
-
-#print("")
-#print(FIG_DIR)
-
-################################
-#print("")
-##print(f'fig/{fig_dir(res_dir):s}/')
-#print(fig_dir(res_dir))
-#print(f)
-################################
+DAT_DIR = f'dat/'
 
 def long_basename(f):
   return f.split('/')[-1]
@@ -57,6 +49,20 @@ def orbit_basename(f):
 
 def parse_token(bn,token):
   return bn.split(token)[1].split('_')[0]
+
+def check(df,Bo,Re,alpha,freq):
+  cond = ( (df['Re']==Re) & (df['Bo']==Bo) & (df['alpha']==alpha) &
+      (df['f']==freq) )
+  return df.index[cond].tolist()
+
+def addRow(df,Bo,Re,alpha,freq,w,runs):
+  df = df.append({'Re':Re, 'Bo':Bo, 'alpha':alpha, 'f':freq,
+    'w*':w, 'runs_#':runs}, ignore_index=True)
+  return df
+
+def replaceRow(df,Bo,Re,alpha,freq,w,runs,index):
+  df.loc[index,['Bo','Re','alpha','f','w*','runs_#']]=[Bo,Re,alpha,freq,w,runs]
+  return None
   
 def main(f,dtinput):
   longbn  = long_basename(f)
@@ -71,6 +77,7 @@ def main(f,dtinput):
     alpha= values[2]
     freq = values[3]
     TU   = int(values[4])
+    runs = f.split('runs_')[-1].split('/')[0]
   except Exception as ex:
     print('Exception in parse token: ', ex)
   if TU<0:
@@ -86,7 +93,7 @@ def main(f,dtinput):
 
   title_string = longbn.replace('_',' ')
   t,Ek,Eg,Ew,ur,uw,uz = loadtxt(f).T
-  os.makedirs(FIG_DIR,exist_ok=True)
+  makedirs(FIG_DIR,exist_ok=True)
 
 ####################
 # Plot time series #
@@ -134,6 +141,7 @@ def main(f,dtinput):
   fig.savefig(f'{FIG_DIR:s}{tsbn:s}.png')
   plt.close()
 
+
 #############
 # Plot ffts #
 #############
@@ -165,6 +173,8 @@ def main(f,dtinput):
   Auz = uz[-M:].std() # Amplitud of Oscillation
   fftuz  = abs(fft(detrend(uz[-M:])*blk(M))[:M//2]) # FFT with Blackman filter [array]
   wMuz = w0*fftuz.argmax() # Compute dominant frequency
+
+  wFourier = min([wMEk,wMEg,wMEw,wMur,wMuw,wMuz])
   
   wLim = 2
   AnotationSize = 15
@@ -231,30 +241,6 @@ def main(f,dtinput):
   savefig(f'{FIG_DIR:s}{fftbn:s}.png')
   plt.close()
 
-###  if TU>0:
-###    if TU==14000:
-###      M = 2*1249200 #two periods?
-###    elif TU==12000:
-###      M = len(Ek)//10
-###  elif TU<0:
-###    M = len(Ek)
-###  AE = Ek[-M:].std()
-###  Ax = xmax[-M:].std()
-###  # Compute dominant frequency
-###  T = M*dt
-###  w0= 2*pi/T
-###  pE = abs(fft(detrend(Ek[-M:])*blk(M))[:M//2])
-###  wME= w0*pE.argmax()
-###  clf()
-###  semilogy(arange(len(pE))*w0,pE,'k-')
-###  xlim(0,1.2)
-###  xlabel('resp. freq.')
-###  ylabel('resp. power')
-###  savefig(f'{FIG_DIR:s}{fftbn:s}.png')
-###  os.makedirs(OUT_DIR,exist_ok=True)
-###  state = '   00'
-###  with open(f'{OUT_DIR:s}{shortbn:s}.txt','w') as fh:
-###    print(f'{Bo:s} {Re:s} {alpha:s} {freq:s} {w:16.7e} {AE:16.7e} {wME:16.7e} {state:s}',file=fh)
 
 #####################
 # Plot phase orbits #
@@ -297,6 +283,25 @@ def main(f,dtinput):
   fig.tight_layout()
   savefig(f'{FIG_DIR:s}{orbitbn:s}.png')
   plt.close()
+
+
+
+  dataFile = 'collectiveData.dat'
+  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','f','w*'])
+  if path.exists(dataFile):
+    df = pd.read_csv(dataFile, sep=" ", header=None, dtype=object) 
+    df.columns=['runs_#','Bo','Re','alpha','f','w*']
+
+  filterIndex = check(df,Bo,Re,alpha,freq)
+
+  if filterIndex and runs > df.loc[filterIndex,'runs_#'].values:
+    replaceRow(df,Bo,Re,alpha,freq,wFourier,runs,filterIndex)
+  elif not filterIndex:
+    df = addRow(df,Bo,Re,alpha,freq,wFourier,runs)
+  
+  with open(path.join('./', dataFile),'w') as outfile:
+    df.to_csv(outfile,header=False,index=False,sep=' ')
+    outfile.close()
 
   return None
 
