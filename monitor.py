@@ -299,7 +299,7 @@ def main(f,dtinput):
   elif not filterIndex:
     df = addRow(df,Bo,Re,alpha,freq,wFourier,runs)
   
-  with open(path.join('./', dataFile),'w') as outfile:
+  with open(path.join(DAT_DIR, dataFile),'w') as outfile:
     df.to_csv(outfile,header=False,index=False,sep=' ')
     outfile.close()
 
