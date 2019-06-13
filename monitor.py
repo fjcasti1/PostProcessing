@@ -29,7 +29,7 @@ def orbit_basename(f):
 def parse_token(bn,token):
   return bn.split(token)[-1].split('_')[0]
 
-def check(df,Bo,Re,alpha,freq):
+def findIndex(df,Bo,Re,alpha,freq):
   cond = ( (df['Re']==Re) & (df['Bo']==Bo) & (df['alpha']==alpha) &
       (df['f']==freq) )
   return df.index[cond].tolist()
@@ -60,7 +60,7 @@ def collectData(DAT_DIR,infiles,outfile):
         wFourier = params[5]
       else:
         runs = Bo = Re = alpha = freq = wFourier = '-'
-      filterIndex = check(df,Bo,Re,alpha,freq)
+      filterIndex = findIndex(df,Bo,Re,alpha,freq)
       if filterIndex and runs > df.loc[filterIndex,'runs_#'].values:
         replaceRow(df,Bo,Re,alpha,freq,wFourier,runs,filterIndex)
       elif not filterIndex:
