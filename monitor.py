@@ -1,39 +1,18 @@
 #!/usr/bin/env python
-import sys
-from os import path, makedirs
-from numpy import pi, loadtxt
+import sys, os
+from numpy import pi, loadtxt, arange
 from pylab import detrend,fft,savefig
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 from scipy.signal import blackman as blk
-import pandas as pd
+from glob import glob
+import pandas as pd 
 
-## TO USE LATEX IN LABELS
-#from matplotlib import rc
-#rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
-### for Palatino and other serif fonts use:
-##rc('font',**{'family':'serif','serif':['Palatino']})
-#rc('text', usetex=True)
-#----------------------------------------------------------------#
 
-f       = sys.argv[1]
-res_dir = sys.argv[2]
-dtinput = sys.argv[3]
-
-#FIG_DIR = f'fig/{res_dir:s}'
-
-#def fig_dir(f):
-#  a = f.split('/')[0]
-#  b = f.split('/')[2]
-#  s = "/"
-#  return f'fig/{s.join([a,b]):s}/'
 def fig_dir(f):
   #a = f.split('/')[0]
   #return f'fig/{a:s}/'
   return f'fig/'
-
-FIG_DIR = fig_dir(res_dir)
-DAT_DIR = f'dat/'
 
 def long_basename(f):
   return f.split('/')[-1]
@@ -48,7 +27,7 @@ def orbit_basename(f):
   return f.replace('ts_','orbit_')
 
 def parse_token(bn,token):
-  return bn.split(token)[1].split('_')[0]
+  return bn.split(token)[-1].split('_')[0]
 
 def check(df,Bo,Re,alpha,freq):
   cond = ( (df['Re']==Re) & (df['Bo']==Bo) & (df['alpha']==alpha) &
@@ -63,8 +42,46 @@ def addRow(df,Bo,Re,alpha,freq,w,runs):
 def replaceRow(df,Bo,Re,alpha,freq,w,runs,index):
   df.loc[index,['Bo','Re','alpha','f','w*','runs_#']]=[Bo,Re,alpha,freq,w,runs]
   return None
+
+def collectData(DAT_DIR,infiles,outfile):
+  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','f','w*'])
+  if os.path.exists(DAT_DIR+outfile):
+    df = pd.read_csv(DAT_DIR+outfile, sep=" ", header=None, dtype=object) 
+    df.columns=['runs_#','Bo','Re','alpha','f','w*']
+  for infile in glob(DAT_DIR+infiles):
+    with open(infile,'r') as f:
+      params = f.readline().strip('\n').split()
+      if params:
+        runs     = params[0]
+        Bo       = params[1]
+        Re       = params[2]
+        alpha    = params[3]
+        freq     = params[4]
+        wFourier = params[5]
+      else:
+        runs = Bo = Re = alpha = freq = wFourier = '-'
+      filterIndex = check(df,Bo,Re,alpha,freq)
+      if filterIndex and runs > df.loc[filterIndex,'runs_#'].values:
+        replaceRow(df,Bo,Re,alpha,freq,wFourier,runs,filterIndex)
+      elif not filterIndex:
+        df = addRow(df,Bo,Re,alpha,freq,wFourier,runs)
+      f.close()
+    os.remove(infile)
+
+  with open(DAT_DIR+outfile,'w') as outfile:
+    df.to_csv(outfile,header=False,index=False,sep=' ')
+    outfile.close()
+  return None
   
-def main(f,dtinput):
+def main():
+
+  f       = sys.argv[1]
+  res_dir = sys.argv[2]
+  dtinput = sys.argv[3]
+  
+  FIG_DIR = fig_dir(res_dir)
+  DAT_DIR = f'dat/'
+
   longbn  = long_basename(f)
   tsbn    = ts_basename(longbn)
   fftbn   = fft_basename(tsbn)
@@ -93,7 +110,7 @@ def main(f,dtinput):
 
   title_string = longbn.replace('_',' ')
   t,Ek,Eg,Ew,ur,uw,uz = loadtxt(f).T
-  makedirs(FIG_DIR,exist_ok=True)
+  os.makedirs(FIG_DIR,exist_ok=True)
 
 ####################
 # Plot time series #
@@ -285,25 +302,21 @@ def main(f,dtinput):
   plt.close()
 
 
+##############
+# Write Data #
+##############
 
-  dataFile = 'collectiveData.dat'
+  dataFile = longbn+'.txt' 
   df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','f','w*'])
-  if path.exists(dataFile):
-    df = pd.read_csv(dataFile, sep=" ", header=None, dtype=object) 
-    df.columns=['runs_#','Bo','Re','alpha','f','w*']
-
-  filterIndex = check(df,Bo,Re,alpha,freq)
-
-  if filterIndex and runs > df.loc[filterIndex,'runs_#'].values:
-    replaceRow(df,Bo,Re,alpha,freq,wFourier,runs,filterIndex)
-  elif not filterIndex:
-    df = addRow(df,Bo,Re,alpha,freq,wFourier,runs)
+  df = addRow(df,Bo,Re,alpha,freq,wFourier,runs)
   
-  with open(path.join(DAT_DIR, dataFile),'w') as outfile:
+  with open(os.path.join(DAT_DIR, dataFile),'w') as outfile:
     df.to_csv(outfile,header=False,index=False,sep=' ')
     outfile.close()
 
   return None
 
-main(f,dtinput)
+
+if __name__ == '__main__':
+  main()
 
