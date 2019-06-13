@@ -46,8 +46,8 @@ def replaceRow(df,Bo,Re,alpha,freq,w,runs,index):
 def collectData(DAT_DIR,infiles,outfile):
   df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','f','w*'])
   if os.path.exists(DAT_DIR+outfile):
-    df = pd.read_csv(DAT_DIR+outfile, sep=" ", header=None, dtype=object) 
-    df.columns=['runs_#','Bo','Re','alpha','f','w*']
+    df = pd.read_csv(DAT_DIR+outfile, sep=' ', dtype=object) 
+#    df.columns=['runs_#','Bo','Re','alpha','f','w*']
   for infile in glob(DAT_DIR+infiles):
     with open(infile,'r') as f:
       params = f.readline().strip('\n').split()
@@ -69,7 +69,7 @@ def collectData(DAT_DIR,infiles,outfile):
     os.remove(infile)
 
   with open(DAT_DIR+outfile,'w') as outfile:
-    df.to_csv(outfile,header=False,index=False,sep=' ')
+    df.to_csv(outfile,header=True,index=False,sep=' ')
     outfile.close()
   return None
   
@@ -311,7 +311,7 @@ def main():
   df = addRow(df,Bo,Re,alpha,freq,wFourier,runs)
   
   with open(os.path.join(DAT_DIR, dataFile),'w') as outfile:
-    df.to_csv(outfile,header=False,index=False,sep=' ')
+    df.to_csv(outfile,header=True,index=False,sep=' ')
     outfile.close()
 
   return None
