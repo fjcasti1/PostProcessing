@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 import sys, os
+import numpy as np
 import pandas as pd
 from itertools import islice
-
+from monitor import findIndex
 
 
 def parse_token(bn,token):
@@ -39,10 +40,38 @@ def MovieListProbe(inputFile,path):
     outfile.close()
   return None
 
-def MovieListBounds(path):
+def MovieListProbe2(inputFile,dataFile,path):
+  datadf = pd.read_csv(dataFile,sep=' ',dtype=object) 
+  df = pd.DataFrame(columns=['Re','Bo','alpha','f','restartPath','TU',
+    'field','IMA','GMA','pertIMA','pertGMA'])
+  with open(inputFile,"r") as file:
+    for line in file:    # loops through lines starting at the 4th one
+      linelist    = line.split()
+      Re          = linelist[0]
+      Bo          = linelist[1]
+      alpha       = linelist[3]
+      f           = linelist[4]
+      restartPath = linelist[7]
+      w           = datadf.iloc[findIndex(datadf,Bo,Re,alpha,f)]['w*']
+      TU = round(4*np.pi/float(w),6)
+      fields = ['g','s','x']
+      for field in fields:
+        df = df.append({'Re':Re, 'Bo':Bo, 'alpha':alpha, 'f':f,
+          'restartPath':restartPath, 'TU':TU, 'field':field,
+          'IMA':'0', 'GMA':'1', 'pertIMA':'2', 'pertGMA':'3'},
+           ignore_index=True)
+  file.close()
+
+  filename = 'movielistprobe.dat'
+  with open(os.path.join(path+'/', filename),'w') as outfile:
+    df.to_csv(outfile,header=False,index=False,sep=' ')
+    outfile.close()
+  return None
+
+def MovieListBounds(inputFile,path):
   df = pd.DataFrame(columns=['Re','Bo','alpha','f','restartPath','TU','field','IMA','GMA','pertIMA','pertGMA'])
   
-  with open(os.path.join(path+'/', "bounds.dat"),"r") as file:
+  with open(inputFile,"r") as file:
     for line in islice(file,3, None): # loops through lines starting at 4th one
       linelist = line.split()
       Bo    = parse_token(linelist[0],'Bo')
@@ -75,20 +104,26 @@ def MovieListBounds(path):
 
 
 if __name__ == '__main__':
-  INPUTFILE = sys.argv[1]
-  MODE      = sys.argv[2]
-  DIRNAME   = os.path.dirname(INPUTFILE)
-  print(INPUTFILE)
-  print(DIRNAME)
+  MODE      = sys.argv[1]
   if MODE == 'PROBEMODE':
+    INPUTFILE = sys.argv[2]
+    DATAFILE  = sys.argv[3]
+    DIRNAME   = os.path.dirname(INPUTFILE)
+    print(INPUTFILE)
+    print(DATAFILE)
+    print(DIRNAME)
     print(MODE)
-    MovieListProbe(INPUTFILE,DIRNAME)
-  elif MODE == 'BOUNDSMODE':
+    MovieListProbe2(INPUTFILE,DATAFILE,DIRNAME)
+  elif MODE == 'MOVIEMODE':
+    INPUTFILE = sys.argv[2]
+    DIRNAME   = os.path.dirname(INPUTFILE)
+    print(INPUTFILE)
+    print(DIRNAME)
     print(MODE)
-    MovieListBounds(DIRNAME)
+    MovieListBounds(INPUTFILE,DIRNAME)
   else:
-    print(MODE)
-    exit(1) 
+    print(f'Incorrect MODE: {MODE:s}')
+    exit(1)
 
 
 
