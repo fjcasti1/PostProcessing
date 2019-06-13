@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import sys, os
+import sys, os, fileinput
 import numpy as np
 import pandas as pd
 from itertools import islice
@@ -14,56 +14,30 @@ def returnIndex(df,Re,Bo,alpha,f,field):
          (df['f']==f) & (df['field']==field)].index.values[0]
   return index
 
-def MovieListProbe(inputFile,path):
-  df = pd.DataFrame(columns=['Re','Bo','alpha','f','restartPath','TU',
-    'field','IMA','GMA','pertIMA','pertGMA'])
-  with open(inputFile,"r") as file:
-    for line in file:    # loops through lines starting at the 4th one
-      linelist    = line.split()
-      Re          = linelist[0]
-      Bo          = linelist[1]
-      alpha       = linelist[3]
-      f           = linelist[4]
-      restartPath = linelist[7]
-      TU          = linelist[8]
-      fields = ['g','s','x']
-      for field in fields:
-        df = df.append({'Re':Re, 'Bo':Bo, 'alpha':alpha, 'f':f,
-          'restartPath':restartPath, 'TU':TU, 'field':field,
-          'IMA':'0', 'GMA':'1', 'pertIMA':'2', 'pertGMA':'3'},
-           ignore_index=True)
-  file.close()
-
-  filename = 'movielistprobe.dat'
-  with open(os.path.join(path+'/', filename),'w') as outfile:
-    df.to_csv(outfile,header=False,index=False,sep=' ')
-    outfile.close()
-  return None
-
-def MovieListProbe2(inputFile,dataFile,path):
+def MovieListProbe(inputFile,dataFile,path):
   datadf = pd.read_csv(dataFile,sep=' ',dtype=object) 
   df = pd.DataFrame(columns=['Re','Bo','alpha','f','restartPath','TU',
     'field','IMA','GMA','pertIMA','pertGMA'])
-  with open(inputFile,"r") as file:
-    for line in file:    # loops through lines starting at the 4th one
+  fields = ['g','s','x']
+  for line in fileinput.FileInput(inputFile,inplace=1):
       linelist    = line.split()
       Re          = linelist[0]
       Bo          = linelist[1]
       alpha       = linelist[3]
       f           = linelist[4]
       restartPath = linelist[7]
-      w           = datadf.iloc[findIndex(datadf,Bo,Re,alpha,f)]['w*']
-      TU = round(4*np.pi/float(w),6)
-      fields = ['g','s','x']
+      w           = float(datadf.iloc[findIndex(datadf,Bo,Re,alpha,f)]['w*'])
+      TU = str(int(round(4*np.pi/w,6)*1e6))+'e-6'
+      line = line.replace(' TU ',' '+TU+' ').strip('\n')
+      print(line)
       for field in fields:
         df = df.append({'Re':Re, 'Bo':Bo, 'alpha':alpha, 'f':f,
           'restartPath':restartPath, 'TU':TU, 'field':field,
           'IMA':'0', 'GMA':'1', 'pertIMA':'2', 'pertGMA':'3'},
            ignore_index=True)
-  file.close()
 
-  filename = 'movielistprobe.dat'
-  with open(os.path.join(path+'/', filename),'w') as outfile:
+  filename = 'MOVIEPROBE_MASTER'
+  with open(path+filename,'w') as outfile:
     df.to_csv(outfile,header=False,index=False,sep=' ')
     outfile.close()
   return None
@@ -96,7 +70,7 @@ def MovieListBounds(inputFile,path):
   
   df = df.sort_values(by=['Bo','Re'])
   print(df) 
-  filename = 'movielist.dat'
+  filename = 'MOVIELIST_MASTER'
   with open(os.path.join(path+'/', filename),'w') as outfile:
     df.to_csv(outfile,header=False,index=False,sep=' ')
     outfile.close()
@@ -108,18 +82,18 @@ if __name__ == '__main__':
   if MODE == 'PROBEMODE':
     INPUTFILE = sys.argv[2]
     DATAFILE  = sys.argv[3]
-    DIRNAME   = os.path.dirname(INPUTFILE)
-    print(INPUTFILE)
-    print(DATAFILE)
-    print(DIRNAME)
-    print(MODE)
-    MovieListProbe2(INPUTFILE,DATAFILE,DIRNAME)
+    DIRNAME   = sys.argv[4]
+    print(f'Input File: {INPUTFILE:s}')
+    print(f'Data File: {DATAFILE:s}')
+    print(f'Output Directory: {DIRNAME:s}')
+    print(f'MODE: {MODE:s}')
+    MovieListProbe(INPUTFILE,DATAFILE,DIRNAME)
   elif MODE == 'MOVIEMODE':
     INPUTFILE = sys.argv[2]
     DIRNAME   = os.path.dirname(INPUTFILE)
-    print(INPUTFILE)
-    print(DIRNAME)
-    print(MODE)
+    print(f'Input File: {INPUTFILE:s}')
+    print(f'Output Directory: {DIRNAME:s}')
+    print(f'MODE: {MODE:s}')
     MovieListBounds(INPUTFILE,DIRNAME)
   else:
     print(f'Incorrect MODE: {MODE:s}')
