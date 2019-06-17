@@ -50,6 +50,7 @@ def collectData(DAT_DIR,infiles,outfile):
 #    df.columns=['runs_#','Bo','Re','alpha','f','w*']
   for infile in glob(DAT_DIR+infiles):
     with open(infile,'r') as f:
+      f.readline()
       params = f.readline().strip('\n').split()
       if params:
         runs     = params[0]
