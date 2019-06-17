@@ -25,7 +25,7 @@ def MovieListProbe(inputFile,dataFile,path):
       Bo          = linelist[1]
       alpha       = linelist[3]
       f           = linelist[4]
-      restartPath = linelist[7]
+      restartPath = linelist[7] # Output, where to place the restarts, not read
       w           = float(datadf.iloc[findIndex(datadf,Bo,Re,alpha,f)]['w*'])
       TU = str(int(round(4*np.pi/w,6)*1e6))+'e-6'
       line = line.replace(' TU ',' '+TU+' ').strip('\n')
@@ -76,6 +76,23 @@ def MovieListBounds(inputFile,path):
     outfile.close()
   return None
 
+def replaceRS(inputFile,dataFile):
+  datadf = pd.read_csv(dataFile,sep=' ',dtype=object) 
+  for line in fileinput.FileInput(inputFile,inplace=1):
+      linelist    = line.split()
+      Re          = linelist[0]
+      Bo          = linelist[1]
+      alpha       = linelist[3]
+      f           = linelist[4]
+      (runs, TU)  = tuple(datadf[['runs_#','TU']].iloc[findIndex(datadf,
+          Bo,Re,alpha,f)].values[0])
+      RSpath   = f'alpha{alpha:s}/runs_{runs:s}/Bo{Bo:s}/' 
+      RSfile   = f'Re{Re:s}_Bo{Bo:s}_alpha{alpha:s}_f{f:s}_TU{TU:s}_0010' 
+      line     = line.replace('RS',RSpath+RSfile).strip('\n')
+      print(line)
+  return None
+
+
 
 if __name__ == '__main__':
   MODE      = sys.argv[1]
@@ -95,6 +112,13 @@ if __name__ == '__main__':
     print(f'Output Directory: {DIRNAME:s}')
     print(f'MODE: {MODE:s}')
     MovieListBounds(INPUTFILE,DIRNAME)
+  elif MODE == 'ADDRS':
+    INPUTFILE = sys.argv[2]
+    DATAFILE  = sys.argv[3]
+    print(f'Input File: {INPUTFILE:s}')
+    print(f'Data File: {DATAFILE:s}')
+    print(f'MODE: {MODE:s}')
+    replaceRS(INPUTFILE,DATAFILE)
   else:
     print(f'Incorrect MODE: {MODE:s}')
     exit(1)
