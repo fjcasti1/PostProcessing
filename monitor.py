@@ -34,38 +34,41 @@ def findIndex(df,Bo,Re,alpha,freq):
       (df['f']==freq) )
   return df.index[cond].tolist()
 
-def addRow(df,Bo,Re,alpha,freq,w,runs):
+def addRow(df,Bo,Re,alpha,freq,w,runs,TU):
   df = df.append({'Re':Re, 'Bo':Bo, 'alpha':alpha, 'f':freq,
-    'w*':w, 'runs_#':runs}, ignore_index=True)
+    'w*':w, 'runs_#':runs, 'TU':TU}, ignore_index=True)
   return df
 
-def replaceRow(df,Bo,Re,alpha,freq,w,runs,index):
-  df.loc[index,['Bo','Re','alpha','f','w*','runs_#']]=[Bo,Re,alpha,freq,w,runs]
+def replaceRow(df,Bo,Re,alpha,freq,w,runs,TU,index):
+  df.loc[index,['Bo','Re','alpha','f','w*','runs_#','TU']]=[Bo,Re,
+      alpha,freq,w,runs,TU]
   return None
 
 def collectData(DAT_DIR,infiles,outfile):
-  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','f','w*'])
+  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','f','w*','TU'])
   if os.path.exists(DAT_DIR+outfile):
     df = pd.read_csv(DAT_DIR+outfile, sep=' ', dtype=object) 
 #    df.columns=['runs_#','Bo','Re','alpha','f','w*']
   for infile in glob(DAT_DIR+infiles):
     with open(infile,'r') as f:
       f.readline()
-      params = f.readline().strip('\n').split()
-      if params:
+      try:
+        params = f.readline().strip('\n').split()
         runs     = params[0]
         Bo       = params[1]
         Re       = params[2]
         alpha    = params[3]
         freq     = params[4]
         wFourier = params[5]
-      else:
-        runs = Bo = Re = alpha = freq = wFourier = '-'
+        TU       = params[6]
+      except Exception as ex:
+#        runs = Bo = Re = alpha = freq = wFourier = TU = '-'
+        print('Exception reading line: ', ex)
       filterIndex = findIndex(df,Bo,Re,alpha,freq)
       if filterIndex and runs > df.loc[filterIndex,'runs_#'].values:
-        replaceRow(df,Bo,Re,alpha,freq,wFourier,runs,filterIndex)
+        replaceRow(df,Bo,Re,alpha,freq,wFourier,runs,TU,filterIndex)
       elif not filterIndex:
-        df = addRow(df,Bo,Re,alpha,freq,wFourier,runs)
+        df = addRow(df,Bo,Re,alpha,freq,wFourier,runs,TU)
       f.close()
     os.remove(infile)
 
@@ -308,8 +311,8 @@ def main():
 ##############
 
   dataFile = longbn+'.txt' 
-  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','f','w*'])
-  df = addRow(df,Bo,Re,alpha,freq,wFourier,runs)
+  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','f','w*','TU'])
+  df = addRow(df,Bo,Re,alpha,freq,wFourier,runs,TU)
   
   with open(os.path.join(DAT_DIR, dataFile),'w') as outfile:
     df.to_csv(outfile,header=True,index=False,sep=' ')
