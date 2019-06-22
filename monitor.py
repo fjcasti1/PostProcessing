@@ -120,7 +120,7 @@ def main():
 # Plot time series #
 ####################
   P = 5 # last P% of the time series
-  M = max(int(len(t)*P/100),1000)
+  M = int(max(len(t)*P/100,400/dt))
   ticksize = 12
   labelsize = 18
   labelpadx = 3
