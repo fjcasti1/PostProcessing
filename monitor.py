@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys, os
 from numpy import pi, loadtxt, arange
+from math import ceil
 from pylab import detrend,fft,savefig
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
@@ -153,9 +154,13 @@ def main():
   
   wLim = 2
   AnotationSize = 15
-  labelpady = 16
   xPosText = 0.25
   yPosText = 0.92
+  ticksize = 12
+  labelsize = 18
+  labelpadx = 3
+  labelpady = 16
+
   fig, axes = plt.subplots(nrows=2,ncols=3,figsize=(14,9)) # Create canvas & axes
   ## Global Kinetic Energy FFT
   axes[0,0].semilogy(w0*arange(len(fftEk)),fftEk,'k-')
@@ -221,8 +226,10 @@ def main():
 # Plot time series #
 ####################
   P = 5 # last P% of the time series
-  TUmin = 200
-  M = int(max(len(t)*P/100,TUmin/dt))
+  Nperiods = 4
+  TUmin = Nperiods*2*pi/wFourier
+#  M = int(max(len(t)*P/100,TUmin/dt))
+  M = ceil(TUmin/dt)
   ticksize = 12
   labelsize = 18
   labelpadx = 3
