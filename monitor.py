@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys, os
 from numpy import pi, loadtxt, arange
+from math import ceil
 from pylab import detrend,fft,savefig
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
@@ -116,53 +117,6 @@ def main():
   t,Ek,Eg,Ew,ur,uw,uz = loadtxt(f).T
   os.makedirs(FIG_DIR,exist_ok=True)
 
-####################
-# Plot time series #
-####################
-  P = 5 # last P% of the time series
-  TUmin = 200
-  M = int(max(len(t)*P/100,TUmin/dt))
-  ticksize = 12
-  labelsize = 18
-  labelpadx = 3
-  labelpady = 10
-  
-  fig, axes = plt.subplots(nrows=2,ncols=3,figsize=(14,9)) # Create canvas & axes
-  ## Global Kinetic Energy Time Series
-  axes[0,0].plot(t[-M:],Ek[-M:],'r-')
-  axes[0,0].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
-  axes[0,0].set_ylabel('$E_k$',rotation=0,fontsize=labelsize,labelpad=labelpady)
-  axes[0,0].tick_params(labelsize=ticksize)
-  ## Global Angular Momentum Time Series
-  axes[0,1].plot(t[-M:],Ew[-M:],'r-')
-  axes[0,1].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
-  axes[0,1].set_ylabel('$E_{\omega}$',rotation=0,fontsize=labelsize,labelpad=labelpady)
-  axes[0,1].tick_params(labelsize=ticksize)
-  ## Global Enstrophy Time Series
-  axes[0,2].plot(t[-M:],Eg[-M:],'r-')
-  axes[0,2].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
-  axes[0,2].set_ylabel('$E_{\gamma}$',rotation=0,fontsize=labelsize,labelpad=labelpady)
-  axes[0,2].tick_params(labelsize=ticksize)
-  ## Local Radial Velocity Time Series
-  axes[1,0].plot(t[-M:],ur[-M:],'r-')
-  axes[1,0].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
-  axes[1,0].set_ylabel('$u_r$',rotation=0,fontsize=labelsize,labelpad=labelpady)
-  axes[1,0].tick_params(labelsize=ticksize)
-  ## Local Azimuthal Velocity Time Series
-  axes[1,1].plot(t[-M:],uw[-M:],'r-')
-  axes[1,1].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
-  axes[1,1].set_ylabel(r'$u_{\theta}$',rotation=0,fontsize=labelsize,labelpad=labelpady)
-  axes[1,1].tick_params(labelsize=ticksize)
-  ## Local Axial Velocity Time Series
-  axes[1,2].plot(t[-M:],uz[-M:],'r-')
-  axes[1,2].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
-  axes[1,2].set_ylabel('$u_z$',rotation=0,fontsize=labelsize,labelpad=labelpady)
-  axes[1,2].tick_params(labelsize=ticksize)
-  
-  fig.tight_layout()
-  fig.savefig(f'{FIG_DIR:s}{tsbn:s}.png')
-  plt.close()
-
 
 #############
 # Plot ffts #
@@ -200,9 +154,13 @@ def main():
   
   wLim = 2
   AnotationSize = 15
-  labelpady = 16
   xPosText = 0.25
   yPosText = 0.92
+  ticksize = 12
+  labelsize = 18
+  labelpadx = 3
+  labelpady = 16
+
   fig, axes = plt.subplots(nrows=2,ncols=3,figsize=(14,9)) # Create canvas & axes
   ## Global Kinetic Energy FFT
   axes[0,0].semilogy(w0*arange(len(fftEk)),fftEk,'k-')
@@ -263,6 +221,57 @@ def main():
   savefig(f'{FIG_DIR:s}{fftbn:s}.png')
   plt.close()
 
+
+####################
+# Plot time series #
+####################
+  P = 5 # last P% of the time series
+  Nperiods = 4
+  if wFourier == 0:
+    M = int(len(t)*P/100)
+  else:
+    TUmin = Nperiods*2*pi/wFourier
+    M = ceil(TUmin/dt)
+  ticksize = 12
+  labelsize = 18
+  labelpadx = 3
+  labelpady = 10
+  
+  fig, axes = plt.subplots(nrows=2,ncols=3,figsize=(14,9)) # Create canvas & axes
+  ## Global Kinetic Energy Time Series
+  axes[0,0].plot(t[-M:],Ek[-M:],'r-')
+  axes[0,0].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
+  axes[0,0].set_ylabel('$E_k$',rotation=0,fontsize=labelsize,labelpad=labelpady)
+  axes[0,0].tick_params(labelsize=ticksize)
+  ## Global Angular Momentum Time Series
+  axes[0,1].plot(t[-M:],Ew[-M:],'r-')
+  axes[0,1].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
+  axes[0,1].set_ylabel('$E_{\omega}$',rotation=0,fontsize=labelsize,labelpad=labelpady)
+  axes[0,1].tick_params(labelsize=ticksize)
+  ## Global Enstrophy Time Series
+  axes[0,2].plot(t[-M:],Eg[-M:],'r-')
+  axes[0,2].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
+  axes[0,2].set_ylabel('$E_{\gamma}$',rotation=0,fontsize=labelsize,labelpad=labelpady)
+  axes[0,2].tick_params(labelsize=ticksize)
+  ## Local Radial Velocity Time Series
+  axes[1,0].plot(t[-M:],ur[-M:],'r-')
+  axes[1,0].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
+  axes[1,0].set_ylabel('$u_r$',rotation=0,fontsize=labelsize,labelpad=labelpady)
+  axes[1,0].tick_params(labelsize=ticksize)
+  ## Local Azimuthal Velocity Time Series
+  axes[1,1].plot(t[-M:],uw[-M:],'r-')
+  axes[1,1].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
+  axes[1,1].set_ylabel(r'$u_{\theta}$',rotation=0,fontsize=labelsize,labelpad=labelpady)
+  axes[1,1].tick_params(labelsize=ticksize)
+  ## Local Axial Velocity Time Series
+  axes[1,2].plot(t[-M:],uz[-M:],'r-')
+  axes[1,2].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
+  axes[1,2].set_ylabel('$u_z$',rotation=0,fontsize=labelsize,labelpad=labelpady)
+  axes[1,2].tick_params(labelsize=ticksize)
+  
+  fig.tight_layout()
+  fig.savefig(f'{FIG_DIR:s}{tsbn:s}.png')
+  plt.close()
 
 #####################
 # Plot phase orbits #
