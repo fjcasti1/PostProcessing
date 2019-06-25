@@ -227,9 +227,11 @@ def main():
 ####################
   P = 5 # last P% of the time series
   Nperiods = 4
-  TUmin = Nperiods*2*pi/wFourier
-#  M = int(max(len(t)*P/100,TUmin/dt))
-  M = ceil(TUmin/dt)
+  if wFourier == 0:
+    M = int(len(t)*P/100)
+  else:
+    TUmin = Nperiods*2*pi/wFourier
+    M = ceil(TUmin/dt)
   ticksize = 12
   labelsize = 18
   labelpadx = 3
