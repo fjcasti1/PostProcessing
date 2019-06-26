@@ -57,10 +57,7 @@ def create_outdir(bn,outdir):
     Bo = values[1]
     Re = values[2]
     f  = values[3]
-    if float(alpha)==0:
-      outdir=(f'{autoOUT_DIR:s}alpha{alpha:s}/Bo{Bo:s}/Re{Re:s}')
-    else:
-      outdir=(f'{autoOUT_DIR:s}alpha{alpha:s}/Bo{Bo:s}/Re{Re:s}/f{f:s}')
+    outdir=(f'{autoOUT_DIR:s}alpha{alpha:s}/Bo{Bo:s}/Re{Re:s}')
     print('\n')
     print(f'{"":=<42s}')
     print('OUTPUT DIRECTORY GENERATED AUTOMATICALLY')
