@@ -91,10 +91,10 @@ def get_files_to_plot():
       sys.exit(1)
   frecs=[]
   for drec in drecs:
-    if isPlotted(drec):     # Check if they have been plotted already
-      print('FILE ',drec, 'ALREADY PLOTTED')
-    else:
-      frecs.append(drec)
+#   if isPlotted(drec):     # Check if they have been plotted already
+#     print('FILE ',drec, 'ALREADY PLOTTED')
+#   else:
+  frecs.append(drec)
   drecs = frecs
   drecs.sort()
   return drecs 
