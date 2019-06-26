@@ -49,7 +49,7 @@ pSurfVelocMovie() {
   python ${srcPath} "${pycmdBody[@]}"
   if [ ${MODE} == "MOVIEMODE" ]; then
     echo "CREATING MOVIES:"
-    imgsPath="movies/alpha${alpha}/Bo${Bo}/Re${Re}/"
+    imgsPath="movies/alpha${alpha}/Bo${Bo}/"
     imgsName="${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_%04d.png"
     movName="${outPath}/${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}.mp4"
     ffcmdbody=(${imgsPath}${imgsName} ${movName})
