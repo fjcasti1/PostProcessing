@@ -5,7 +5,7 @@ delay="${3:?'DELAY TIME NOT SUPPLIED'}"
 job_com="${4:-main}"
 
 
-TIMELIMIT="0-00:03"
+TIMELIMIT="0-00:23"
 echo "Delay = ${delay} hours"
 echo "Time Limit = ${TIMELIMIT}"
 
