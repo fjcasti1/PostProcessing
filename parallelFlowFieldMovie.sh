@@ -64,7 +64,7 @@ pMovieMaker() {
     if [ ${MODE} == "MOVIEMODE" ]; then
       echo "CREATING MOVIES:"
       for field in ${moviefields[@]}; do
-        imgsPath="movies/alpha${alpha}/Bo${Bo}/Re${Re}/"
+        imgsPath="movies/alpha${alpha}/Bo${Bo}/"
         imgsName="${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_%04d.png"
         movName="${outPath}/${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}.mp4"
         ffcmdbody=(${imgsPath}${imgsName} ${movName})
@@ -91,7 +91,7 @@ my_job() {
   pertGMA="${12:?'PERT GMA VAL MISSING'}"
   res_dir="${13:-"../../movies/"}"
 
-  prefix="Re${Re}_Bo${Bo}_alpha${alpha}_f${MODE}_TU${TU}"
+  prefix="Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}"
   out_rec="${res_dir}sweep_${prefix}.out"
   ! [[ -d "$res_dir" ]] && mkdir -p "$res_dir" || :
    
