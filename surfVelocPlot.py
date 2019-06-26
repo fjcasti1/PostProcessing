@@ -94,7 +94,7 @@ def get_files_to_plot():
 #   if isPlotted(drec):     # Check if they have been plotted already
 #     print('FILE ',drec, 'ALREADY PLOTTED')
 #   else:
-  frecs.append(drec)
+    frecs.append(drec)
   drecs = frecs
   drecs.sort()
   return drecs 
@@ -148,7 +148,8 @@ def myplot(x, q, out_fig, xmin=0, xmax=2, ymin=0, ymax=1.0001):
 
 def main(f):
   data  = reader(f)
-  myplot(r, data['v'], get_figname(os.path.basename(f)))
+  alpha = float(os.path.basename(RESTART_PATH).split('alpha')[-1].split('_')[0])
+  myplot(r, data['v'], get_figname(os.path.basename(f)), 0,2,0,1.0001+alpha)
   return data['v']
 
 if __name__ == '__main__':
