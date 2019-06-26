@@ -26,33 +26,25 @@ trapped() {
 }
 
 pSurfVelocMovie() {
-  Bo="${1:?'BOUSSINESQ VAL MISSING'}"
-  Re="${2:?'REYNOLDS VAL MISSING'}"
-  alpha="${3:?'ALPHA VAL MISSING'}"
-  freq="${4:?'FORCING FREQ VAL MISSING'}"
-  TU="${5:?'TIME UNITS MISSING'}"
-  runs="${6:?'RUNS UNIT MISSING'}"
-  dummy="${7:?'FIELD VAL MISSING'}"
-  dummy="${8:?'IMA VAL MISSING'}"
-  dummy="${9:?'GMA VAL MISSING'}"
-  dummy="${10:?'PERT IMA VAL MISSING'}"
-  dummy="${11:?'TIME UNITS MISSING'}"
-  MODE="${12:?'MODE OPT MISSING'}"
-  outPath="${13:-"movies"}"
-  field='surf_v'
+  MODE="${1:?'MODE OPT MISSING'}"
+  Bo="${2:?'BOUSSINESQ VAL MISSING'}"
+  Re="${3:?'REYNOLDS VAL MISSING'}"
+  alpha="${4:?'ALPHA VAL MISSING'}"
+  freq="${5:?'FORCING FREQ VAL MISSING'}"
+  TU="${6:?'TIME UNITS MISSING'}"
+  restartDir="${7:?'RUNS UNIT MISSING'}"
+  field="${8:?'FIELD MISSING'}"
+  outPath="${9:-"movies"}"
 
   srcPath="src/PostProcessing/surfVelocPlot.py"
-  destMachine="somss11"
   framerate=50
   pycmd="python ${srcPath} "
 
-  framerate=50
   ffcmd0="-hide_banner -loglevel panic -framerate ${framerate} -i"
 
   echo "CREATING FRAMES:"
-  restartPath="alpha${alpha}/runs_${runs}/Bo${Bo}/"
   restartName="Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_0*"
-  pycmdBody=("${restartPath}${restartName}" auto)
+  pycmdBody=("${restartDir}${restartName}" auto)
   echo "python ${srcPath} ${pycmdBody[@]}"
   python ${srcPath} "${pycmdBody[@]}"
   if [ ${MODE} == "MOVIEMODE" ]; then
@@ -63,33 +55,31 @@ pSurfVelocMovie() {
     ffcmdbody=(${imgsPath}${imgsName} ${movName})
     echo "ffmpeg $ffcmd0 ${ffcmdbody[@]}"
     ffmpeg $ffcmd0 ${ffcmdbody[@]}
-    scpbody="${movName} ${destMachine}:/home/castillo/Documents/RESEARCH/MOVIES/"
-    scp ${scpbody}
   fi
 }
 
 my_job() {
   MODE="${1:?'MODE OPT MISSING'}"
-  Bo="${2:?'BOUSSINESQ VAL MISSING'}"
-  Re="${3:?'REYNOLDS VAL MISSING'}"
-  alpha="${4:?'ALPHA VAL MISSING'}"
-  freq="${5:?'FORCING FREQ VAL MISSING'}"
-  TU="${6:?'TIME UNITS MISSING'}"
-  runs="${7:?'RUNS UNIT MISSING'}"
-  dummy="${8:?'FIELD VAL MISSING'}"
-  dummy="${9:?'IMA VAL MISSING'}"
-  dummy="${10:?'GMA VAL MISSING'}"
-  dummy="${11:?'PERT IMA VAL MISSING'}"
-  dummy="${12:?'TIME UNITS MISSING'}"
-  res_dir="${13:-"../../movies/"}"
-  field='surf_v'
-
+  Re="${2:?'REYNOLDS VAL MISSING'}"
+  Bo="${3:?'BOUSSINESQ VAL MISSING'}"
+  dummy="${4:?'DUMMY VAL MISSING'}"
+  alpha="${5:?'ALPHA VAL MISSING'}"
+  freq="${6:?'FORCING FREQ VAL MISSING'}"
+  dummy="${7:?'DUMMY VAL MISSING'}"
+  dummy="${8:?'DUMMY VAL MISSING'}"
+  restartDir="${9:?'RESTART DIR MISSING'}"
+  TU="${10:?'TIME UNITS MISSING'}"
+  res_dir="../../movies/"
+  field="surf_v"
+  
   prefix="Re${Re}_Bo${Bo}_alpha${alpha}_f${f}_TU${TU}"
   out_rec="${res_dir}sweep_${prefix}.out"
   ! [[ -d "$res_dir" ]] && mkdir -p "$res_dir" || :
    
   printf "Plotting surface ${field} of the solution: ${prefix}\n"
-  pSurfVelocMovie $Bo $Re $alpha $freq $TU $runs $dummy $dummy $dummy $dummy $dummy $MODE
+  pSurfVelocMovie $MODE $Bo $Re $alpha $freq $TU $restartDir $field
+  echo "pSurfVelocMovie $MODE $Bo $Re $alpha $freq $TU $restartDir
+  $field" > out.log
 }
 
 export -f my_job pSurfVelocMovie
