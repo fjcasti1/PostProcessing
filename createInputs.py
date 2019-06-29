@@ -9,14 +9,14 @@ from monitor import findIndex
 def parse_token(bn,token):
   return bn.split(token)[1].split('_')[0]
 
-def returnIndex(df,Re,Bo,alpha,f,field):
+def returnIndex(df,Re,Bo,alpha,wf,field):
   index = df.loc[(df['Re']==Re) & (df['Bo']==Bo) & (df['alpha']==alpha) &
-         (df['f']==f) & (df['field']==field)].index.values[0]
+         (df['w_f']==wf) & (df['field']==field)].index.values[0]
   return index
 
 def MovieListProbe(inputFile,dataFile,path):
   datadf = pd.read_csv(dataFile,sep=' ',dtype=object) 
-  df = pd.DataFrame(columns=['Re','Bo','alpha','f','restartPath','TU',
+  df = pd.DataFrame(columns=['Re','Bo','alpha','w_f','restartPath','TU',
     'field','IMA','GMA','pertIMA','pertGMA'])
   fields = ['g','s','x']
   for line in fileinput.FileInput(inputFile,inplace=1):
@@ -24,14 +24,14 @@ def MovieListProbe(inputFile,dataFile,path):
       Re          = linelist[0]
       Bo          = linelist[1]
       alpha       = linelist[3]
-      f           = linelist[4]
+      wf          = linelist[4]
       restartPath = linelist[7] # Output, where to place the restarts, not read
-      w           = float(datadf.iloc[findIndex(datadf,Bo,Re,alpha,f)]['w*'])
+      w           = float(datadf.iloc[findIndex(datadf,Bo,Re,alpha,wf)]['w*'])
       TU = str(int(round(4*np.pi/w,6)*1e6))+'e-6'
       line = line.replace(' TU ',' '+TU+' ').strip('\n')
       print(line)
       for field in fields:
-        df = df.append({'Re':Re, 'Bo':Bo, 'alpha':alpha, 'f':f,
+        df = df.append({'Re':Re, 'Bo':Bo, 'alpha':alpha, 'w_f':wf,
           'restartPath':restartPath, 'TU':TU, 'field':field,
           'IMA':'0', 'GMA':'1', 'pertIMA':'2', 'pertGMA':'3'},
            ignore_index=True)
@@ -43,7 +43,7 @@ def MovieListProbe(inputFile,dataFile,path):
   return None
 
 def MovieListBounds(inputFile,path):
-  df = pd.DataFrame(columns=['Re','Bo','alpha','f','restartPath','TU','field','IMA','GMA','pertIMA','pertGMA'])
+  df = pd.DataFrame(columns=['Re','Bo','alpha','w_f','restartPath','TU','field','IMA','GMA','pertIMA','pertGMA'])
   
   with open(inputFile,"r") as file:
     for line in islice(file,3, None): # loops through lines starting at 4th one
@@ -51,18 +51,18 @@ def MovieListBounds(inputFile,path):
       Bo    = parse_token(linelist[0],'Bo')
       Re    = parse_token(linelist[0],'Re')
       alpha = parse_token(linelist[0],'alpha')
-      f     = parse_token(linelist[0],'f')
+      wf    = parse_token(linelist[0],'w')
       TU    = parse_token(linelist[0],'TU')
       field = linelist[0].split('_')[0]
       
       if 'pert' in linelist[0]:
-        df = df.append({'Re':Re, 'Bo':Bo, 'alpha':alpha, 'f':f,
+        df = df.append({'Re':Re, 'Bo':Bo, 'alpha':alpha, 'w_f':wf,
           'restartPath':linelist[1], 'TU':TU, 'field':field,
           'pertIMA':linelist[2], 'pertGMA':linelist[4]},
           ignore_index=True)
 
       if 'pert' not in linelist[0]:
-        index = returnIndex(df,Re,Bo,alpha,f,field)
+        index = returnIndex(df,Re,Bo,alpha,wf,field)
         df.iloc[index]['IMA'] = linelist[2]
         df.iloc[index]['GMA'] = linelist[4]
 
@@ -83,11 +83,11 @@ def replaceRS(inputFile,dataFile):
       Re          = linelist[0]
       Bo          = linelist[1]
       alpha       = linelist[3]
-      f           = linelist[4]
+      wf          = linelist[4]
       (runs, TU)  = tuple(datadf[['runs_#','TU']].iloc[findIndex(datadf,
-          Bo,Re,alpha,f)].values[0])
+          Bo,Re,alpha,wf)].values[0])
       RSpath   = f'alpha{alpha:s}/runs_{runs:s}/Bo{Bo:s}/' 
-      RSfile   = f'Re{Re:s}_Bo{Bo:s}_alpha{alpha:s}_f{f:s}_TU{TU:s}_0010' 
+      RSfile   = f'Re{Re:s}_Bo{Bo:s}_alpha{alpha:s}_w{wf:s}_TU{TU:s}_0010' 
       line     = line.replace('RS',RSpath+RSfile).strip('\n')
       print(line)
   return None
