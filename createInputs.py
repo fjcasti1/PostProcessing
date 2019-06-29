@@ -26,8 +26,8 @@ def MovieListProbe(inputFile,dataFile,path):
       alpha       = linelist[3]
       wf          = linelist[4]
       restartPath = linelist[7] # Output, where to place the restarts, not read
-      w           = float(datadf.iloc[findIndex(datadf,Bo,Re,alpha,wf)]['w*'])
-      TU = str(int(round(4*np.pi/w,6)*1e6))+'e-6'
+      wFFT        = float(datadf.iloc[findIndex(datadf,Bo,Re,alpha,wf)]['w*'])
+      TU = str(int(round(4*np.pi/wFFT,6)*1e6))+'e-6'
       line = line.replace(' TU ',' '+TU+' ').strip('\n')
       print(line)
       for field in fields:
