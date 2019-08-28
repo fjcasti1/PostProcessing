@@ -30,26 +30,25 @@ def orbit_basename(f):
 def parse_token(bn,token):
   return bn.split(token)[-1].split('_')[0]
 
-def findIndex(df,Bo,Re,alpha,freq):
+def findIndex(df,Bo,Re,alpha,wf):
   cond = ( (df['Re']==Re) & (df['Bo']==Bo) & (df['alpha']==alpha) &
-      (df['f']==freq) )
+      (df['w_f']==wf) )
   return df.index[cond].tolist()
 
-def addRow(df,Bo,Re,alpha,freq,w,runs,TU):
-  df = df.append({'Re':Re, 'Bo':Bo, 'alpha':alpha, 'f':freq,
-    'w*':w, 'runs_#':runs, 'TU':TU}, ignore_index=True)
+def addRow(df,Bo,Re,alpha,wf,wFFT,runs,TU):
+  df = df.append({'Re':Re, 'Bo':Bo, 'alpha':alpha, 'w_f':wf,
+    'w*':wFFT, 'runs_#':runs, 'TU':TU}, ignore_index=True)
   return df
 
-def replaceRow(df,Bo,Re,alpha,freq,w,runs,TU,index):
-  df.loc[index,['Bo','Re','alpha','f','w*','runs_#','TU']]=[Bo,Re,
-      alpha,freq,w,runs,TU]
+def replaceRow(df,Bo,Re,alpha,wf,wFFT,runs,TU,index):
+  df.loc[index,['Bo','Re','alpha','w_f','w*','runs_#','TU']]=[Bo,Re,
+      alpha,wf,wFFT,runs,TU]
   return None
 
 def collectData(DAT_DIR,infiles,outfile):
-  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','f','w*','TU'])
+  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','w*','TU'])
   if os.path.exists(DAT_DIR+outfile):
     df = pd.read_csv(DAT_DIR+outfile, sep=' ', dtype=object) 
-#    df.columns=['runs_#','Bo','Re','alpha','f','w*']
   for infile in glob(DAT_DIR+infiles):
     with open(infile,'r') as f:
       f.readline()
@@ -59,17 +58,16 @@ def collectData(DAT_DIR,infiles,outfile):
         Bo       = params[1]
         Re       = params[2]
         alpha    = params[3]
-        freq     = params[4]
-        wFourier = params[5]
+        wf       = params[4]
+        wFFT     = params[5]
         TU       = params[6]
       except Exception as ex:
-#        runs = Bo = Re = alpha = freq = wFourier = TU = '-'
         print('Exception reading line: ', ex)
-      filterIndex = findIndex(df,Bo,Re,alpha,freq)
+      filterIndex = findIndex(df,Bo,Re,alpha,wf)
       if filterIndex and runs > df.loc[filterIndex,'runs_#'].values:
-        replaceRow(df,Bo,Re,alpha,freq,wFourier,runs,TU,filterIndex)
+        replaceRow(df,Bo,Re,alpha,wf,wFFT,runs,TU,filterIndex)
       elif not filterIndex:
-        df = addRow(df,Bo,Re,alpha,freq,wFourier,runs,TU)
+        df = addRow(df,Bo,Re,alpha,wf,wFFT,runs,TU)
       f.close()
     os.remove(infile)
 
@@ -91,27 +89,26 @@ def main():
   tsbn    = ts_basename(longbn)
   fftbn   = fft_basename(tsbn)
   orbitbn = orbit_basename(tsbn)
-  tokens  = ['Re','Bo','alpha','f','TU'] 
+  tokens  = ['Re','Bo','alpha','w','TU'] 
   try:
     values = [ parse_token(longbn,token) for token in tokens ]
     Re   = values[0]
     Bo   = values[1]
     alpha= values[2]
-    freq = values[3]
+    wf   = values[3]  # Forcing Angular Freq
     TU   = int(values[4])
     runs = f.split('runs_')[-1].split('/')[0]
   except Exception as ex:
     print('Exception in parse token: ', ex)
   if TU<0:
     Nsteps = -TU
-    if freq!=0:
-      dt     = float(1/(freq*Nsteps))
-    elif freq==0:
+    if wf!=0:
+      dt     = float(1/(wf*Nsteps))
+    elif wf==0:
       dt = float(dtinput)
   else:
     dt = float(dtinput)
     Nsteps = float(TU/dt)
-  w = 2*pi*float(freq)
 
   title_string = longbn.replace('_',' ')
   t,Ek,Eg,Ew,ur,uw,uz = loadtxt(f).T
@@ -123,8 +120,8 @@ def main():
 #############
   P = 100
   M = int(len(Ek)*P/100)
-  T = M*dt   # Period ??
-  w0  = 2*pi/T       # Natural Frequency??
+  T = M*dt      # Period ??
+  w0  = 2*pi/T  # Natural Frequency??
   
   AEk = Ek[-M:].std() # Amplitud of Oscillation
   fftEk  = abs(fft(detrend(Ek[-M:])*blk(M))[:M//2]) # FFT with Blackman filter [array]
@@ -150,7 +147,7 @@ def main():
   fftuz  = abs(fft(detrend(uz[-M:])*blk(M))[:M//2]) # FFT with Blackman filter [array]
   wMuz = w0*fftuz.argmax() # Compute dominant frequency
 
-  wFourier = min([wMEk,wMEg,wMEw,wMur,wMuw,wMuz])
+  wFFT = min([wMEk,wMEg,wMEw,wMur,wMuw,wMuz])
   
   wLim = 2
   AnotationSize = 15
@@ -227,10 +224,10 @@ def main():
 ####################
   P = 5 # last P% of the time series
   Nperiods = 4
-  if wFourier == 0:
+  if wFFT == 0:
     M = int(len(t)*P/100)
   else:
-    TUmin = Nperiods*2*pi/wFourier
+    TUmin = Nperiods*2*pi/wFFT
     M = ceil(TUmin/dt)
   ticksize = 12
   labelsize = 18
@@ -321,8 +318,8 @@ def main():
 ##############
 
   dataFile = longbn+'.txt' 
-  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','f','w*','TU'])
-  df = addRow(df,Bo,Re,alpha,freq,wFourier,runs,TU)
+  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','w*','TU'])
+  df = addRow(df,Bo,Re,alpha,wf,wFFT,runs,TU)
   
   with open(os.path.join(DAT_DIR, dataFile),'w') as outfile:
     df.to_csv(outfile,header=True,index=False,sep=' ')
