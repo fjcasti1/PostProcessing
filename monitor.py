@@ -56,9 +56,9 @@ def addRow(df,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk):
     'TU':TU, 'w*':wFFT, 'pkpkAmpEk': pkpkAmpEk}, ignore_index=True)
   return df
 
-def replaceRow(df,Bo,Re,alpha,wf,wFFT,runs,TU,index):
-  df.loc[index,['Bo','Re','alpha','w_f','w*','runs_#','TU']]=[Bo,Re,
-      alpha,wf,wFFT,runs,TU]
+def replaceRow(df,filterIndex,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk):
+  df.loc[index,['runs_#','Bo','Re','alpha','w_f','TU','w*','pkpkAmpEk']]=[runs,Bo,Re,
+      alpha,wf,TU,wFFT,pkpkAmpEk]
   return None
 
 def collectData(DAT_DIR,infiles,outfile):
@@ -81,7 +81,7 @@ def collectData(DAT_DIR,infiles,outfile):
         print('Exception reading line: ', ex)
       filterIndex = findIndex(df,Bo,Re,alpha,wf)
       if filterIndex and runs > df.loc[filterIndex,'runs_#'].values:
-        replaceRow(df,Bo,Re,alpha,wf,wFFT,runs,TU,filterIndex)
+        replaceRow(df,filterIndex,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk)
       elif not filterIndex:
         df = addRow(df,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk)
       f.close()
