@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import sys, os
-from numpy import pi, loadtxt, arange
+import numpy as np
+#from numpy import pi, loadtxt, arange
+from scipy.signal import find_peaks
 from math import ceil
 from pylab import detrend,fft,savefig
 from matplotlib import pyplot as plt
@@ -30,14 +32,28 @@ def orbit_basename(f):
 def parse_token(bn,token):
   return bn.split(token)[-1].split('_')[0]
 
+def pktopkAmp(S,M=0,F=0.9):
+  """
+    Help here
+  """
+  if M == 0:
+    M = len(S)
+  thresUp  = np.mean(S)+F*(np.max(S)-np.mean(S))
+  thresDwn = np.mean(S)-F*(np.mean(S)-np.min(S))
+  peaks, _   = find_peaks(S[-M:], height=thresUp)
+  valleys, _ = find_peaks(-S[-M:],height=-thresDwn)
+  pkpkAmp = np.mean(S[-M:][peaks]) - np.mean(S[-M:][valleys])
+  relErr = ((np.std(S[-M:][peaks])**2 + np.std(S[-M:][valleys])**2)**0.5)/pkpkAmp
+  return (pkpkAmp, relErr)
+
 def findIndex(df,Bo,Re,alpha,wf):
   cond = ( (df['Re']==Re) & (df['Bo']==Bo) & (df['alpha']==alpha) &
       (df['w_f']==wf) )
   return df.index[cond].tolist()
 
-def addRow(df,Bo,Re,alpha,wf,wFFT,runs,TU):
-  df = df.append({'Re':Re, 'Bo':Bo, 'alpha':alpha, 'w_f':wf,
-    'w*':wFFT, 'runs_#':runs, 'TU':TU}, ignore_index=True)
+def addRow(df,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk):
+  df = df.append({'runs_#':runs, 'Bo':Bo, 'Re':Re, 'alpha':alpha, 'w_f':wf,
+    'TU':TU, 'w*':wFFT, 'pkpkAmpEk': pkpkAmpEk}, ignore_index=True)
   return df
 
 def replaceRow(df,Bo,Re,alpha,wf,wFFT,runs,TU,index):
@@ -67,7 +83,7 @@ def collectData(DAT_DIR,infiles,outfile):
       if filterIndex and runs > df.loc[filterIndex,'runs_#'].values:
         replaceRow(df,Bo,Re,alpha,wf,wFFT,runs,TU,filterIndex)
       elif not filterIndex:
-        df = addRow(df,Bo,Re,alpha,wf,wFFT,runs,TU)
+        df = addRow(df,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk)
       f.close()
     os.remove(infile)
 
@@ -77,7 +93,6 @@ def collectData(DAT_DIR,infiles,outfile):
   return None
   
 def main():
-
   f       = sys.argv[1]
   res_dir = sys.argv[2]
   dtinput = sys.argv[3]
@@ -111,7 +126,7 @@ def main():
     Nsteps = float(TU/dt)
 
   title_string = longbn.replace('_',' ')
-  t,Ek,Eg,Ew,ur,uw,uz = loadtxt(f).T
+  t,Ek,Eg,Ew,ur,uw,uz = np.loadtxt(f).T
   os.makedirs(FIG_DIR,exist_ok=True)
 
 
@@ -121,7 +136,7 @@ def main():
   P = 100
   M = int(len(Ek)*P/100)
   T = M*dt      # Period ??
-  w0  = 2*pi/T  # Natural Frequency??
+  w0  = 2*np.pi/T  # Natural Frequency??
   
   AEk = Ek[-M:].std() # Amplitud of Oscillation
   fftEk  = abs(fft(detrend(Ek[-M:])*blk(M))[:M//2]) # FFT with Blackman filter [array]
@@ -160,7 +175,7 @@ def main():
 
   fig, axes = plt.subplots(nrows=2,ncols=3,figsize=(14,9)) # Create canvas & axes
   ## Global Kinetic Energy FFT
-  axes[0,0].semilogy(w0*arange(len(fftEk)),fftEk,'k-')
+  axes[0,0].semilogy(w0*np.arange(len(fftEk)),fftEk,'k-')
   axes[0,0].annotate('$\omega^*$ = {:f}'.format(wMEk), xy=(wMEk, fftEk.max()),
           xycoords='data', xytext=(xPosText,yPosText), textcoords='axes fraction', 
           size=AnotationSize, arrowprops=dict(arrowstyle="->"))
@@ -169,7 +184,7 @@ def main():
   axes[0,0].set_xlim(0,wLim)
   axes[0,0].tick_params(labelsize=ticksize)
   ## Global Angular Momentum FFT
-  axes[0,1].semilogy(w0*arange(len(fftEw)),fftEw,'k-')
+  axes[0,1].semilogy(w0*np.arange(len(fftEw)),fftEw,'k-')
   axes[0,1].annotate('$\omega^*$ = {:f}'.format(wMEw), xy=(wMEw, fftEw.max()),
           xycoords='data', xytext=(xPosText,yPosText), textcoords='axes fraction', 
           size=AnotationSize, arrowprops=dict(arrowstyle="->"))
@@ -178,7 +193,7 @@ def main():
   axes[0,1].set_xlim(0,wLim)
   axes[0,1].tick_params(labelsize=ticksize)
   ## Global Enstrophy FFT
-  axes[0,2].semilogy(w0*arange(len(fftEg)),fftEg,'k-')
+  axes[0,2].semilogy(w0*np.arange(len(fftEg)),fftEg,'k-')
   axes[0,2].annotate('$\omega^*$ = {:f}'.format(wMEg), xy=(wMEg, fftEk.max()),
           xycoords='data', xytext=(xPosText,yPosText), textcoords='axes fraction', 
           size=AnotationSize, arrowprops=dict(arrowstyle="->"))
@@ -187,7 +202,7 @@ def main():
   axes[0,2].set_xlim(0,wLim)
   axes[0,2].tick_params(labelsize=ticksize)
   ## Local Radial Velocity FFT
-  axes[1,0].semilogy(w0*arange(len(fftur)),fftur,'k-')
+  axes[1,0].semilogy(w0*np.arange(len(fftur)),fftur,'k-')
   axes[1,0].annotate('$\omega^*$ = {:f}'.format(wMur), xy=(wMur, fftur.max()),
           xycoords='data', xytext=(xPosText,yPosText), textcoords='axes fraction', 
           size=AnotationSize, arrowprops=dict(arrowstyle="->"))
@@ -196,7 +211,7 @@ def main():
   axes[1,0].set_xlim(0,wLim)
   axes[1,0].tick_params(labelsize=ticksize)
   ## Local Azimuthal Velocity FFT
-  axes[1,1].semilogy(w0*arange(len(fftuw)),fftuw,'k-')
+  axes[1,1].semilogy(w0*np.arange(len(fftuw)),fftuw,'k-')
   axes[1,1].annotate('$\omega^*$ = {:f}'.format(wMuw), xy=(wMuw, fftuw.max()),
           xycoords='data', xytext=(xPosText,yPosText), textcoords='axes fraction', 
           size=AnotationSize, arrowprops=dict(arrowstyle="->"))
@@ -205,7 +220,7 @@ def main():
   axes[1,1].set_xlim(0,wLim)
   axes[1,1].tick_params(labelsize=ticksize)
   ## Local Axial Velocity FFT
-  axes[1,2].semilogy(w0*arange(len(fftuz)),fftuz,'k-')
+  axes[1,2].semilogy(w0*np.arange(len(fftuz)),fftuz,'k-')
   axes[1,2].annotate('$\omega^*$ = {:f}'.format(wMuz), xy=(wMuz, fftuz.max()),
           xycoords='data', xytext=(xPosText,yPosText), textcoords='axes fraction', 
           size=AnotationSize, arrowprops=dict(arrowstyle="->"))
@@ -227,7 +242,7 @@ def main():
   if wFFT == 0:
     M = int(len(t)*P/100)
   else:
-    TUmin = Nperiods*2*pi/wFFT
+    TUmin = Nperiods*2*np.pi/wFFT
     M = ceil(TUmin/dt)
   ticksize = 12
   labelsize = 18
@@ -316,10 +331,10 @@ def main():
 ##############
 # Write Data #
 ##############
-
+  (pkpkAmpEk, err) = pktopkAmp(Ek)
   dataFile = longbn+'.txt' 
-  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','w*','TU'])
-  df = addRow(df,Bo,Re,alpha,wf,wFFT,runs,TU)
+  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','TU','w*','pkpkAmpEk'])
+  df = addRow(df,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk)
   
   with open(os.path.join(DAT_DIR, dataFile),'w') as outfile:
     df.to_csv(outfile,header=True,index=False,sep=' ')
