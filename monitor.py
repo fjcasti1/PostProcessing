@@ -56,13 +56,13 @@ def addRow(df,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk):
     'TU':TU, 'w*':wFFT, 'pkpkAmpEk': pkpkAmpEk}, ignore_index=True)
   return df
 
-def replaceRow(df,filterIndex,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk):
+def replaceRow(df,index,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk):
   df.loc[index,['runs_#','Bo','Re','alpha','w_f','TU','w*','pkpkAmpEk']]=[runs,Bo,Re,
       alpha,wf,TU,wFFT,pkpkAmpEk]
   return None
 
 def collectData(DAT_DIR,infiles,outfile):
-  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','w*','TU'])
+  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','TU','w*','pkpkAmpEk'])
   if os.path.exists(DAT_DIR+outfile):
     df = pd.read_csv(DAT_DIR+outfile, sep=' ', dtype=object) 
   for infile in glob(DAT_DIR+infiles):
@@ -70,13 +70,14 @@ def collectData(DAT_DIR,infiles,outfile):
       f.readline()
       try:
         params = f.readline().strip('\n').split()
-        runs     = params[0]
-        Bo       = params[1]
-        Re       = params[2]
-        alpha    = params[3]
-        wf       = params[4]
-        wFFT     = params[5]
-        TU       = params[6]
+        runs      = params[0]
+        Bo        = params[1]
+        Re        = params[2]
+        alpha     = params[3]
+        wf        = params[4]
+        TU        = params[5]
+        wFFT      = params[6]
+        pkpkAmpEk = params[7]
       except Exception as ex:
         print('Exception reading line: ', ex)
       filterIndex = findIndex(df,Bo,Re,alpha,wf)
