@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import sys, os
 import numpy as np
-#from numpy import pi, loadtxt, arange
 from scipy.signal import find_peaks
 from math import ceil
 from pylab import detrend,fft,savefig
@@ -51,18 +50,18 @@ def findIndex(df,Bo,Re,alpha,wf):
       (df['w_f']==wf) )
   return df.index[cond].tolist()
 
-def addRow(df,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk):
+def addRow(df,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk,relErrEk):
   df = df.append({'runs_#':runs, 'Bo':Bo, 'Re':Re, 'alpha':alpha, 'w_f':wf,
-    'TU':TU, 'w*':wFFT, 'pkpkAmpEk': pkpkAmpEk}, ignore_index=True)
+    'TU':TU, 'w*':wFFT, 'pkpkAmpEk': pkpkAmpEk, 'relErrEk': relErrEk}, ignore_index=True)
   return df
 
-def replaceRow(df,index,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk):
-  df.loc[index,['runs_#','Bo','Re','alpha','w_f','TU','w*','pkpkAmpEk']]=[runs,Bo,Re,
-      alpha,wf,TU,wFFT,pkpkAmpEk]
+def replaceRow(df,index,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk,relErrEk):
+  df.loc[index,['runs_#','Bo','Re','alpha','w_f','TU','w*','pkpkAmpEk','relErrEk']]=[runs,Bo,Re,
+      alpha,wf,TU,wFFT,pkpkAmpEk,relErrEk]
   return None
 
 def collectData(DAT_DIR,infiles,outfile):
-  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','TU','w*','pkpkAmpEk'])
+  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','TU','w*','pkpkAmpEk','relErrEk'])
   if os.path.exists(DAT_DIR+outfile):
     df = pd.read_csv(DAT_DIR+outfile, sep=' ', dtype=object) 
   for infile in glob(DAT_DIR+infiles):
@@ -78,13 +77,14 @@ def collectData(DAT_DIR,infiles,outfile):
         TU        = params[5]
         wFFT      = params[6]
         pkpkAmpEk = params[7]
+        relErrEk  = params[8]
       except Exception as ex:
         print('Exception reading line: ', ex)
       filterIndex = findIndex(df,Bo,Re,alpha,wf)
-      if filterIndex and runs > df.loc[filterIndex,'runs_#'].values:
-        replaceRow(df,filterIndex,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk)
+      if filterIndex and runs >= df.loc[filterIndex,'runs_#'].values:
+        replaceRow(df,filterIndex,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk,relErrEk)
       elif not filterIndex:
-        df = addRow(df,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk)
+        df = addRow(df,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk,relErrEk)
       f.close()
     os.remove(infile)
 
@@ -332,10 +332,10 @@ def main():
 ##############
 # Write Data #
 ##############
-  (pkpkAmpEk, err) = pktopkAmp(Ek)
+  (pkpkAmpEk, relErrEk) = pktopkAmp(Ek)
   dataFile = longbn+'.txt' 
-  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','TU','w*','pkpkAmpEk'])
-  df = addRow(df,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk)
+  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','TU','w*','pkpkAmpEk','relErrEk'])
+  df = addRow(df,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk,relErrEk)
   
   with open(os.path.join(DAT_DIR, dataFile),'w') as outfile:
     df.to_csv(outfile,header=True,index=False,sep=' ')
