@@ -20,10 +20,10 @@ def main():
   for Bo in BoList:
     Re = ReList[BoList.index(Bo)]
     fig, axes = plt.subplots(nrows=1,ncols=2,figsize=(18,6)) # Create canvas & axes
-    axes[0].set_xlabel(r'$\omega$',fontsize=labelsize)
+    axes[0].set_xlabel(r'$\omega_f$',fontsize=labelsize)
     axes[0].set_ylabel('peak-to-peak amp.',fontsize=labelsize)
     axes[0].grid()
-    axes[1].set_xlabel(r'$\omega$',fontsize=labelsize)
+    axes[1].set_xlabel(r'$\omega_f$',fontsize=labelsize)
     axes[1].set_ylabel('rel. Error (%)',fontsize=labelsize)
     axes[1].grid()
     for alpha in alphaList:
