@@ -82,8 +82,8 @@ def replaceRS(inputFile,dataFile):
       linelist    = line.split()
       Re          = linelist[0]
       Bo          = linelist[1]
-      alpha       = linelist[3]
-      wf          = linelist[4]
+      alpha       = linelist[2]
+      wf          = linelist[3]
       (runs, TU)  = tuple(datadf[['runs_#','TU']].iloc[findIndex(datadf,
           Bo,Re,alpha,wf)].values[0])
       RSpath   = f'alpha{alpha:s}/runs_{runs:s}/Bo{Bo:s}/' 
