@@ -84,10 +84,10 @@ def replaceRS(inputFile,dataFile):
       Bo          = linelist[1]
       alpha       = linelist[2]
       wf          = linelist[3]
-      (runs, TU)  = tuple(datadf[['runs_#','TU']].iloc[findIndex(datadf,
-          Bo,Re,alpha,wf)].values[0])
+      (runs, NtsT, NT)  = tuple(datadf[['runs_#','NtsT',
+        'NT']].iloc[findIndex(datadf,Bo,Re,alpha,wf)].values[0])
       RSpath   = f'alpha{alpha:s}/runs_{runs:s}/Bo{Bo:s}/' 
-      RSfile   = f'Re{Re:s}_Bo{Bo:s}_alpha{alpha:s}_w{wf:s}_TU{TU:s}_0010' 
+      RSfile   = f'Re{Re:s}_Bo{Bo:s}_alpha{alpha:s}_wf{wf:s}_NtsT{NtsT:s}_NT{NT:s}_0010' 
       line     = line.replace('RS',RSpath+RSfile).strip('\n')
       print(line)
   return None
