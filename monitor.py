@@ -20,7 +20,7 @@ def long_basename(f):
   return f.split('/')[-1]
 
 def ts_basename(f):
-  return f.split('_TU')[0]
+  return f.split('_NtsT')[0]
 
 def fft_basename(f):
   return f.replace('ts_','fft_')
@@ -50,18 +50,19 @@ def findIndex(df,Bo,Re,alpha,wf):
       (df['w_f']==wf) )
   return df.index[cond].tolist()
 
-def addRow(df,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk,relErrEk):
+def addRow(df,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,AEk):
   df = df.append({'runs_#':runs, 'Bo':Bo, 'Re':Re, 'alpha':alpha, 'w_f':wf,
-    'TU':TU, 'w*':wFFT, 'pkpkAmpEk': pkpkAmpEk, 'relErrEk': relErrEk}, ignore_index=True)
+    'NtsT':NtsT, 'NT':NT, 'w*':wFFT, 'stdEk': AEk}, ignore_index=True)
   return df
 
-def replaceRow(df,index,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk,relErrEk):
-  df.loc[index,['runs_#','Bo','Re','alpha','w_f','TU','w*','pkpkAmpEk','relErrEk']]=[runs,Bo,Re,
-      alpha,wf,TU,wFFT,pkpkAmpEk,relErrEk]
+def replaceRow(df,index,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk):
+  df.loc[index,['runs_#','Bo','Re','alpha','w_f','NtsT','NT','w*',
+    'stdEk']]=[runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk]
   return None
 
 def collectData(DAT_DIR,infiles,outfile):
-  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','TU','w*','pkpkAmpEk','relErrEk'])
+  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','NtsT',
+    'NT','w*','stdEk'])
   if os.path.exists(DAT_DIR+outfile):
     df = pd.read_csv(DAT_DIR+outfile, sep=' ', dtype=object) 
   for infile in glob(DAT_DIR+infiles):
@@ -74,17 +75,17 @@ def collectData(DAT_DIR,infiles,outfile):
         Re        = params[2]
         alpha     = params[3]
         wf        = params[4]
-        TU        = params[5]
-        wFFT      = params[6]
-        pkpkAmpEk = params[7]
-        relErrEk  = params[8]
+        NtsT      = params[5]
+        NT        = params[6]
+        wFFT      = params[7]
+        stdEk     = params[8]
       except Exception as ex:
         print('Exception reading line: ', ex)
       filterIndex = findIndex(df,Bo,Re,alpha,wf)
       if filterIndex and runs >= df.loc[filterIndex,'runs_#'].values:
-        replaceRow(df,filterIndex,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk,relErrEk)
+        replaceRow(df,filterIndex,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk)
       elif not filterIndex:
-        df = addRow(df,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk,relErrEk)
+        df = addRow(df,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk)
       f.close()
     os.remove(infile)
 
@@ -99,32 +100,41 @@ def main():
   dtinput = sys.argv[3]
   
   FIG_DIR = fig_dir(res_dir)
+  FIG_DIR = f'figtest/'
   DAT_DIR = f'dat/'
 
   longbn  = long_basename(f)
   tsbn    = ts_basename(longbn)
   fftbn   = fft_basename(tsbn)
   orbitbn = orbit_basename(tsbn)
-  tokens  = ['Re','Bo','alpha','w','TU'] 
+  tokens  = ['Re','Bo','alpha','wf','NtsT','NT'] 
   try:
     values = [ parse_token(longbn,token) for token in tokens ]
     Re   = values[0]
     Bo   = values[1]
     alpha= values[2]
     wf   = values[3]  # Forcing Angular Freq
-    TU   = int(values[4])
+    NtsT = int(values[4])
+    NT   = int(values[5])
     runs = f.split('runs_')[-1].split('/')[0]
   except Exception as ex:
     print('Exception in parse token: ', ex)
-  if TU<0:
-    Nsteps = -TU
-    if wf!=0:
-      dt     = float(1/(wf*Nsteps))
-    elif wf==0:
-      dt = float(dtinput)
+  if float(wf)>0:
+    Period = 2*np.pi/float(wf)
+    dt     = Period/NtsT
+    Nsteps = float(NT*NtsT)
   else:
-    dt = float(dtinput)
-    Nsteps = float(TU/dt)
+    print('wf not greater than 0. wf = ', wf) # COMPLETE THIS!
+
+#  if TU<0:
+#    Nsteps = -TU
+#    if wf!=0:
+#      dt     = float(1/(wf*Nsteps))
+#    elif wf==0:
+#      dt = float(dtinput)
+#  else:
+#    dt = float(dtinput)
+#    Nsteps = float(TU/dt)
 
   title_string = longbn.replace('_',' ')
   t,Ek,Eg,Ew,ur,uw,uz = np.loadtxt(f).T
@@ -332,10 +342,10 @@ def main():
 ##############
 # Write Data #
 ##############
-  (pkpkAmpEk, relErrEk) = pktopkAmp(Ek)
+  #(pkpkAmpEk, relErrEk) = pktopkAmp(Ek)
   dataFile = longbn+'.txt' 
-  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','TU','w*','pkpkAmpEk','relErrEk'])
-  df = addRow(df,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk,relErrEk)
+  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','NtsT','NT','w*','stdEk'])
+  df = addRow(df,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,AEk)
   
   with open(os.path.join(DAT_DIR, dataFile),'w') as outfile:
     df.to_csv(outfile,header=True,index=False,sep=' ')

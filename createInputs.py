@@ -92,6 +92,21 @@ def replaceRS(inputFile,dataFile):
       print(line)
   return None
 
+#def replaceRS(inputFile,dataFile):
+#  datadf = pd.read_csv(dataFile,sep=' ',dtype=object) 
+#  for line in fileinput.FileInput(inputFile,inplace=1):
+#      linelist    = line.split()
+#      Re          = linelist[0]
+#      Bo          = linelist[1]
+#      alpha       = linelist[2]
+#      wf          = linelist[3]
+#      (runs, TU)  = tuple(datadf[['runs_#','TU']].iloc[findIndex(datadf,
+#          Bo,Re,alpha,wf)].values[0])
+#      RSpath   = f'alpha{alpha:s}/runs_{runs:s}/Bo{Bo:s}/' 
+#      RSfile   = f'Re{Re:s}_Bo{Bo:s}_alpha{alpha:s}_w{wf:s}_TU{TU:s}_0010' 
+#      line     = line.replace('RS',RSpath+RSfile).strip('\n')
+#      print(line)
+#  return None
 
 
 if __name__ == '__main__':
