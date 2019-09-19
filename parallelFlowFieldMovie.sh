@@ -31,15 +31,16 @@ pMovieMaker() {
   Re="${2:?'REYNOLDS VAL MISSING'}"
   Bo="${3:?'BOUSSINESQ VAL MISSING'}"
   alpha="${4:?'ALPHA VAL MISSING'}"
-  freq="${5:?'FORCING FREQ VAL MISSING'}"
+  wf="${5:?'FORCING FREQ VAL MISSING'}"
   restartPath="${6:?'RESTART PATH MISSING'}"
-  TU="${7:?'TIME UNITS MISSING'}"
-  field="${8:?'FIELD VAL MISSING'}"
-  IMA="${9:?'IMA VAL MISSING'}"
-  GMA="${10:?'GMA VAL MISSING'}"
-  pertIMA="${11:?'PERT IMA VAL MISSING'}"
-  pertGMA="${12:?'PERT GMA MISSING'}"
-  outPath="${13:-"movies"}"
+  NtsT="${7:?'TIME STEPS PER PERIOD MISSING'}"
+  NT="${8:?'NUMBER OF PERIODS MISSING'}"
+  field="${9:?'FIELD VAL MISSING'}"
+  IMA="${10:?'IMA VAL MISSING'}"
+  GMA="${11:?'GMA VAL MISSING'}"
+  pertIMA="${12:?'PERT IMA VAL MISSING'}"
+  pertGMA="${13:?'PERT GMA VAL MISSING'}"
+  outPath="${14:-"movies"}"
 
   srcPath="src/PostProcessing/flowFieldPlot.py"
   framerate=50
@@ -47,28 +48,26 @@ pMovieMaker() {
   ffcmd0="-hide_banner -loglevel panic -framerate ${framerate} -i"
   moviefields=($field "${field}_pert")
 
+  restartName="Re${Re}_Bo${Bo}_alpha${alpha}_wf${wf}_NtsT${NtsT}_NT${NT}_0*"
+  pycmdBody=("${restartPath}${restartName}" auto)
+  flags="${field} ${IMA} ${GMA} ${pertIMA} ${pertGMA}"
   if [ ${MODE} == "PROBEMODE" ]; then
     echo "PROBING:"
-    restartName="Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_0*"
-    pycmdBody=("${restartPath}${restartName}" auto)
-    flags="${field} ${IMA} ${GMA} ${pertIMA} ${pertGMA}"
     echo "python ${srcPath} ${pycmdBody[@]} ${flags} ${MODE}"
     python ${srcPath} "${pycmdBody[@]}" ${flags} ${MODE}
   elif [ ${MODE} == "PLOTMODE" ] || [ ${MODE} == "MOVIEMODE" ]; then
     echo "CREATING FRAMES:"
-    restartName="Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_0*"
-    pycmdBody=("${restartPath}${restartName}" auto)
-    flags="${field} ${IMA} ${GMA} ${pertIMA} ${pertGMA}"
     echo "python ${srcPath} ${pycmdBody[@]} ${flags}"
     python ${srcPath} "${pycmdBody[@]}" ${flags}
     if [ ${MODE} == "MOVIEMODE" ]; then
       echo "CREATING MOVIES:"
       for field in ${moviefields[@]}; do
         imgsPath="movies/alpha${alpha}/Bo${Bo}/"
-        imgsName="${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_%04d.png"
-        movName="${outPath}/${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}.mp4"
+        imgsName="${field}_Re${Re}_Bo${Bo}_alpha${alpha}_wf${wf}_NtsT${NtsT}_NT${NT}_%04d.png"
+        movName="${outPath}/${field}_Re${Re}_Bo${Bo}_alpha${alpha}_wf${wf}.mp4"
         ffcmdbody=(${imgsPath}${imgsName} ${movName})
         ffmpeg $ffcmd0 ${ffcmdbody[@]}
+        echo "ffmpeg $ffcmd0 ${ffcmdbody[@]}"
       done
     fi
   else 
@@ -81,31 +80,32 @@ my_job() {
   Re="${2:?'REYNOLDS VAL MISSING'}"
   Bo="${3:?'BOUSSINESQ VAL MISSING'}"
   alpha="${4:?'ALPHA VAL MISSING'}"
-  freq="${5:?'FORCING FREQ VAL MISSING'}"
+  wf="${5:?'FORCING FREQ VAL MISSING'}"
   restartPath="${6:?'RESTART PATH MISSING'}"
-  TU="${7:?'TIME UNITS MISSING'}"
-  field="${8:?'FIELD VAL MISSING'}"
-  IMA="${9:?'IMA VAL MISSING'}"
-  GMA="${10:?'GMA VAL MISSING'}"
-  pertIMA="${11:?'PERT IMA VAL MISSING'}"
-  pertGMA="${12:?'PERT GMA VAL MISSING'}"
-  res_dir="${13:-"../../movies/"}"
+  NtsT="${7:?'TIME STEPS PER PERIOD MISSING'}"
+  NT="${8:?'NUMBER OF PERIODS MISSING'}"
+  field="${9:?'FIELD VAL MISSING'}"
+  IMA="${10:?'IMA VAL MISSING'}"
+  GMA="${11:?'GMA VAL MISSING'}"
+  pertIMA="${12:?'PERT IMA VAL MISSING'}"
+  pertGMA="${13:?'PERT GMA VAL MISSING'}"
+  res_dir="${14:-"../../movies/"}"
 
-  prefix="Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}"
+  prefix="Re${Re}_Bo${Bo}_alpha${alpha}_wf${wf}_NtsT${NtsT}_NT${NT}"
   out_rec="${res_dir}sweep_${prefix}.out"
   ! [[ -d "$res_dir" ]] && mkdir -p "$res_dir" || :
    
   printf "Plotting ${field} field of the solution: ${prefix}\n"
-  pMovieMaker $MODE $Re $Bo $alpha $freq $restartPath $TU $field $IMA $GMA $pertIMA $pertGMA 
+  pMovieMaker $MODE $Re $Bo $alpha $wf $restartPath $NtsT $NT $field $IMA $GMA $pertIMA $pertGMA 
   if [ "${MODE}" == "PROBEMODE" ]; then
-    inawkfile="${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_bounds.dat"
-    outawkfile="${field}_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_boundstotal.dat"
+    inawkfile="${field}_Re${Re}_Bo${Bo}_alpha${alpha}_wf${wf}_NtsT${NtsT}_NT${NT}_bounds.dat"
+    outawkfile="${field}_Re${Re}_Bo${Bo}_alpha${alpha}_wf${wf}_NtsT${NtsT}_NT${NT}_boundstotal.dat"
     if [ -f ${inawkfile} ]; then
       src/PostProcessing/igMAX.awk -v restartPath="$restartPath" ${inawkfile} >> $outawkfile
       rm ${inawkfile}
     fi
-    inawkfile_pert="${field}_pert_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_bounds.dat"
-    outawkfile_pert="${field}_pert_Re${Re}_Bo${Bo}_alpha${alpha}_f${freq}_TU${TU}_boundstotal.dat"
+    inawkfile_pert="${field}_pert_Re${Re}_Bo${Bo}_alpha${alpha}_wf${wf}_NtsT${NtsT}_NT${NT}_bounds.dat"
+    outawkfile_pert="${field}_pert_Re${Re}_Bo${Bo}_alpha${alpha}_wf${wf}_NtsT${NtsT}_NT${NT}_boundstotal.dat"
     if [ -f ${inawkfile_pert} ]; then
       src/PostProcessing/igMAX.awk -v restartPath="$restartPath" ${inawkfile_pert} >> $outawkfile_pert
       rm ${inawkfile_pert}
@@ -130,7 +130,6 @@ sbatch --comment="Sweep ${job_prefix} ${job_com}" << EOF
 #SBATCH -o "${sbatch_rec}.out"
 #SBATCH -e "${sbatch_rec}.err"
 
-! [[ -d "$sbatch_dir" ]] && mkdir -p "$sbatch_dir" || :
 
 [[ -d "../lib/" ]] && {
   export LD_LIBRARY_PATH=":$(readlink -f ../lib/):$LD_LIBRARY_PATH"

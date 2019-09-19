@@ -59,8 +59,12 @@ __EOF
   done
   sort temp.dat >> $outFile
   rm temp.dat
+
+  L=$(wc -l < $outFile)
+  N=$(( ($L-3)/6  ))
   echo " "
-  echo "The file $outFile has $(wc -l < $outFile) lines"
+  echo "The file $outFile has $L lines"
+  echo "That should represent $N different cases"
   echo "Moving $outFile to $path/"
   mv $outFile "$path/"
   echo "FINISHED IN $MODE"
