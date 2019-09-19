@@ -45,7 +45,7 @@ def MovieListProbe(inputFile,dataFile,path):
   return None
 
 def MovieListBounds(inputFile,path):
-  df = pd.DataFrame(columns=['Re','Bo','alpha','w_f','restartPath','TU','field','IMA','GMA','pertIMA','pertGMA'])
+  df = pd.DataFrame(columns=['Re','Bo','alpha','w_f','restartPath','NtsT','NT','field','IMA','GMA','pertIMA','pertGMA'])
   
   with open(inputFile,"r") as file:
     for line in islice(file,3, None): # loops through lines starting at 4th one
@@ -53,13 +53,14 @@ def MovieListBounds(inputFile,path):
       Bo    = parse_token(linelist[0],'Bo')
       Re    = parse_token(linelist[0],'Re')
       alpha = parse_token(linelist[0],'alpha')
-      wf    = parse_token(linelist[0],'w')
-      TU    = parse_token(linelist[0],'TU')
+      wf    = parse_token(linelist[0],'wf')
+      NtsT  = parse_token(linelist[0],'NtsT')
+      NT    = parse_token(linelist[0],'NT')
       field = linelist[0].split('_')[0]
       
       if 'pert' in linelist[0]:
         df = df.append({'Re':Re, 'Bo':Bo, 'alpha':alpha, 'w_f':wf,
-          'restartPath':linelist[1], 'TU':TU, 'field':field,
+          'restartPath':linelist[1], 'NtsT':NtsT, 'NT':NT, 'field':field,
           'pertIMA':linelist[2], 'pertGMA':linelist[4]},
           ignore_index=True)
 
