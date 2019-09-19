@@ -3,11 +3,12 @@
 ## Table of contents
 
 <!--ts-->
-   * [Flow Visualization](#usage)
+   * [Flow Visualization](#flow-visualization)
       * [How to create Flow Field Movies](#How-to-create-flow-field-movies)
       * [How to create Surface Velocity Movies](#How-to-create-surface-velocity-movies)
 <!--te-->
 
+## Flow Visualization
 
 ### How to create Flow Field Movies
 
