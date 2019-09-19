@@ -100,7 +100,6 @@ def main():
   dtinput = sys.argv[3]
   
   FIG_DIR = fig_dir(res_dir)
-  FIG_DIR = f'figtest/'
   DAT_DIR = f'dat/'
 
   longbn  = long_basename(f)
