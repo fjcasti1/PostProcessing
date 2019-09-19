@@ -1,7 +1,6 @@
 # PostProcessing
 
-Table of contents
-=================
+## Table of contents
 
 <!--ts-->
    * [Flow Visualization](#usage)
