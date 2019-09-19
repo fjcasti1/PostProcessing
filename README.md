@@ -1,6 +1,6 @@
 # PostProcessing
 
-## Table of contents
+## Contents
 
 <!--ts-->
    * [Flow Visualization](#flow-visualization)
@@ -33,6 +33,9 @@
 ```
   parallel bash src/DNS/PostProcessing/driverFlowFieldMovie.sh {} 'MOVIEMODE' ::: path/to/z* 
 ```
+
+<br>[⬆ Back to top](#contents)
+
 ## How to create Surface Velocity Movies 
 
 ###### Much Simpler
