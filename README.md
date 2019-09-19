@@ -26,7 +26,8 @@ Different steps:
 ```
   parallel bash src/DNS/SWEEP_JOB_REC.sh {} 'D-HH:MM' 'delayTime' 'MOVIEDNS' 'comment' ::: path/to/inputrecFile
 ```
-2. **Create Probing File**
+2. **Create Probing File:**
+* Generate the file `MOVIEPROBE_MASTER`
 ```python
   python src/PostProcessing/createInputs.py PROBEMODE path/to/masterFile path/to/datFile path/to/store/MOVIEPROBE_MASTER
 ```
@@ -38,27 +39,16 @@ Different steps:
   parallel bash src/PostProcessing/driverFlowFieldMovie.sh {} 'PROBEMODE' ::: path/to/p*
 ```
 4. **Create Plotting File**
+* Generate the file `MOVIELIST_MASTER`
 ```python
-  python src/PostProcessing/createInputs.py PROBEMODE path/to/movieDNS/masterFile path/to/datFile path/to/store/desired/inputFile
+  python src/PostProcessing/createInputs.py MOVIEMODE path/to/bounds.dat path/to/store/MOVIELIST_MASTER
 ```
 5. **Generate Movies**
-3. Divide DNS input in separate files, _z*_, appropriately.
-4. Perform DNS with appropriate number of restarts, so far typically used 400
-5. Divide the **MOVIEPROBE_MASTER** into appropriate number of files, _p*_
-6. Generate file with the bounds **bounds.dat**, using the flag __PROBEMODE__:
+* Split the `MOVIELIST_MASTER` file in the convenient subfiles *m**
+* Run `driverFlowFieldMovie.sh` in MOVIEMODE. It will generate the frames in *.png* format and movies in *.mp4*.
 ```
-  parallel bash src/DNS/PostProcessing/driverFlowFieldMovie.sh {} 'PROBEMODE' ::: path/to/p* 
+  parallel bash src/PostProcessing/driverFlowFieldMovie.sh {} 'MOVIEMODE' ::: path/to/m*
 ```
-7. The file **bounds.dat** has been created in the directory of **MOVIEPROBE_MASTER**. Now we need to create the input file with the bounds integrated, **MOVIELIST_MASTER**, to create the movies. 
-```python
-  python src/PostProcessing/createInputs.py MOVIEMODE path/to/datFile path/to/store/desired/inputFile
-```
-8. Divide the **MOVIELIST_MASTER** into appropriate number of files, _z*_
-9. Finally, create the movies:
-```
-  parallel bash src/DNS/PostProcessing/driverFlowFieldMovie.sh {} 'MOVIEMODE' ::: path/to/z* 
-```
-
 <br>[⬆ Back to top](#PostProcessing)
 
 ## How to create Surface Velocity Movies 
