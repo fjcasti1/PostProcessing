@@ -4,20 +4,9 @@ Table of contents
 =================
 
 <!--ts-->
-   * [gh-md-toc](#gh-md-toc)
-   * [Table of contents](#table-of-contents)
-   * [Installation](#installation)
    * [Flow Visualization](#usage)
       * [How to create Flow Field Movies](#How-to-create-flow-field-movies)
-      * [STDIN](#stdin)
-      * [Local files](#local-files)
-      * [Remote files](#remote-files)
-      * [Multiple files](#multiple-files)
-      * [Combo](#combo)
-      * [Auto insert and update TOC](#auto-insert-and-update-toc)
-      * [GitHub token](#github-token)
-   * [Tests](#tests)
-   * [Dependency](#dependency)
+      * [How to create Surface Velocity Movies](#How-to-create-surface-velocity-movies)
 <!--te-->
 
 
