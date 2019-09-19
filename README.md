@@ -18,7 +18,7 @@
 <details>
 <summary>View contents</summary>
 
-* [Flow Field Movies](#How_to)
+* [Flow Field Movies](#How to)
 * [`all_unique`](#all_unique)
 * [`bifurcate`](#bifurcate)
 * [`bifurcate_by`](#bifurcate_by)
