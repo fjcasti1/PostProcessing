@@ -5,21 +5,25 @@
 ###  List
 <details>
 <summary>View contents</summary>
+
 * [`all_equal`](#all_equal)
 * [`all_unique`](#all_unique)
 * [`bifurcate`](#bifurcate)
 * [`bifurcate_by`](#bifurcate_by)
 * [`chunk`](#chunk)
+
 </details>
 
 ###  Flow Visualization
 <details>
 <summary>View contents</summary>
+
 * [Flow A](#Flow_B)
 * [`all_unique`](#all_unique)
 * [`bifurcate`](#bifurcate)
 * [`bifurcate_by`](#bifurcate_by)
 * [`chunk`](#chunk)
+
 </details>
 
 ---
