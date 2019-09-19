@@ -3,15 +3,25 @@
 ## Contents
 
 ###  List
-
 <details>
 <summary>View contents</summary>
-
 * [`all_equal`](#all_equal)
 * [`all_unique`](#all_unique)
 * [`bifurcate`](#bifurcate)
 * [`bifurcate_by`](#bifurcate_by)
 * [`chunk`](#chunk)
+</details>
+
+###  Flow Visualization
+<details>
+<summary>View contents</summary>
+* [Flow A](#Flow_B)
+* [`all_unique`](#all_unique)
+* [`bifurcate`](#bifurcate)
+* [`bifurcate_by`](#bifurcate_by)
+* [`chunk`](#chunk)
+</details>
+
 ---
 
 ##  List
@@ -63,7 +73,9 @@ all_unique(y) # False
 
 <br>[⬆ Back to top](#contents)
 
-### Flow_Field_Movies
+## Flow Visualization
+
+### Flow A
 
 1. Create DNS input file with *TU* in the column of time units, not-specified.
 2. Use python code **createInputs.py** to create the input file for the probe mode. This will substitute *TU* in the input file for the DNS for the corresponding time units for 2 periods, and will create the file **MOVIEPROBE_MASTER** where desired. The command is the following:
