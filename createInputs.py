@@ -16,23 +16,25 @@ def returnIndex(df,Re,Bo,alpha,wf,field):
 
 def MovieListProbe(inputFile,dataFile,path):
   datadf = pd.read_csv(dataFile,sep=' ',dtype=object) 
-  df = pd.DataFrame(columns=['Re','Bo','alpha','w_f','restartPath','TU',
+  df = pd.DataFrame(columns=['Re','Bo','alpha','w_f','restartPath','NtsT','NT',
     'field','IMA','GMA','pertIMA','pertGMA'])
   fields = ['g','s','x']
   for line in fileinput.FileInput(inputFile,inplace=1):
       linelist    = line.split()
       Re          = linelist[0]
       Bo          = linelist[1]
-      alpha       = linelist[3]
-      wf          = linelist[4]
-      restartPath = linelist[7] # Output, where to place the restarts, not read
-      wFFT        = float(datadf.iloc[findIndex(datadf,Bo,Re,alpha,wf)]['w*'])
-      TU = str(int(round(4*np.pi/wFFT,6)*1e6))+'e-6'
-      line = line.replace(' TU ',' '+TU+' ').strip('\n')
+      alpha       = linelist[2]
+      wf          = linelist[3]
+      restartPath = linelist[6] # Output, where to place the restarts, not read
+      NtsT        = linelist[7]
+      NT          = linelist[8] # Output, where to place the restarts, not read
+#      wFFT        = float(datadf.iloc[findIndex(datadf,Bo,Re,alpha,wf)]['w*'])
+#      TU = str(int(round(4*np.pi/wFFT,6)*1e6))+'e-6'
+#      line = line.replace(' TU ',' '+TU+' ').strip('\n')
       print(line)
       for field in fields:
         df = df.append({'Re':Re, 'Bo':Bo, 'alpha':alpha, 'w_f':wf,
-          'restartPath':restartPath, 'TU':TU, 'field':field,
+          'restartPath':restartPath, 'NtsT':NtsT, 'NT':NT, 'field':field,
           'IMA':'0', 'GMA':'1', 'pertIMA':'2', 'pertGMA':'3'},
            ignore_index=True)
 
