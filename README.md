@@ -1,85 +1,27 @@
 # PostProcessing
 
-## Contents
+Table of contents
+=================
 
-###  List
-<details>
-<summary>View contents</summary>
-
-* [`all_equal`](#all_equal)
-* [`all_unique`](#all_unique)
-* [`bifurcate`](#bifurcate)
-* [`bifurcate_by`](#bifurcate_by)
-* [`chunk`](#chunk)
-
-</details>
-
-###  Flow Visualization
-<details>
-<summary>View contents</summary>
-
-* [Flow Field Movies](#How to)
-* [`all_unique`](#all_unique)
-* [`bifurcate`](#bifurcate)
-* [`bifurcate_by`](#bifurcate_by)
-* [`chunk`](#chunk)
-
-</details>
-
----
-
-##  List
+<!--ts-->
+   * [gh-md-toc](#gh-md-toc)
+   * [Table of contents](#table-of-contents)
+   * [Installation](#installation)
+   * [Flow Visualization](#usage)
+      * [How to create Flow Field Movies](#How-to-create-flow-field-movies)
+      * [STDIN](#stdin)
+      * [Local files](#local-files)
+      * [Remote files](#remote-files)
+      * [Multiple files](#multiple-files)
+      * [Combo](#combo)
+      * [Auto insert and update TOC](#auto-insert-and-update-toc)
+      * [GitHub token](#github-token)
+   * [Tests](#tests)
+   * [Dependency](#dependency)
+<!--te-->
 
 
-### all_equal
-
-Check if all elements in a list are equal.
-
-Use `[1:]` and `[:-1]` to compare all the values in the given list.
-
-```py
-def all_equal(lst):
-  return lst[1:] == lst[:-1]
-```
-
-<details>
-<summary>Examples</summary>
-
-```py
-all_equal([1, 2, 3, 4, 5, 6]) # False
-all_equal([1, 1, 1, 1]) # True
-```
-</details>
-
-<br>[⬆ Back to top](#contents)
-
-### all_unique
-
-Returns `True` if all the values in a flat list are unique, `False` otherwise.
-
-Use `set()` on the given list to remove duplicates, compare its length with the length of the list.
-
-```py
-def all_unique(lst):
-  return len(lst) == len(set(lst))
-```
-
-<details>
-<summary>Examples</summary>
-
-```py
-x = [1,2,3,4,5,6]
-y = [1,2,2,3,4,5]
-all_unique(x) # True
-all_unique(y) # False
-```
-</details>
-
-<br>[⬆ Back to top](#contents)
-
-## Flow Visualization
-
-### How_to
+### How to create Flow Field Movies
 
 1. Create DNS input file with *TU* in the column of time units, not-specified.
 2. Use python code **createInputs.py** to create the input file for the probe mode. This will substitute *TU* in the input file for the DNS for the corresponding time units for 2 periods, and will create the file **MOVIEPROBE_MASTER** where desired. The command is the following:
