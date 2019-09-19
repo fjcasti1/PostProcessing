@@ -11,6 +11,7 @@
 ## Flow Visualization
 
 ### How to create Flow Field Movies
+
 Different steps:
 1. **Generate the Restarts:** 
 * First we need to generate the job record file using the `zmeta_ReSWEEP_JOB_REC` code in the DNS repository. Pay special attention to the number of periods we want in the movie, *NT*, the number of time steps per period, *NtsT*, so the simulation doesn't crash and the number of restarts (future frames) to generate. Should use a number of time steps per period multiple of the number of frames we want to capture.
@@ -25,18 +26,22 @@ Different steps:
 ```
   parallel bash src/DNS/SWEEP_JOB_REC.sh {} 'D-HH:MM' 'delayTime' 'MOVIEDNS' 'comment' ::: path/to/inputrecFile
 ```
-
-
 2. **Create Probing File**
-3. **Create Probing File**
-4. **Create Probing File**
+```python
+  python src/PostProcessing/createInputs.py PROBEMODE path/to/masterFile path/to/datFile path/to/store/MOVIEPROBE_MASTER
+```
 
-New List:
-1. Create DNS input file with *TU* in the column of time units, not-specified.
-2. Use python code **createInputs.py** to create the input file for the probe mode. This will substitute *TU* in the input file for the DNS for the corresponding time units for 2 periods, and will create the file **MOVIEPROBE_MASTER** where desired. The command is the following:
+3. **Probing**
+* Split the `MOVIEPROBE_MASTER` file in the convenient subfiles *p**
+* Run `driverFlowFieldMovie.sh` in PROBEMODE. It will generate the file `bounds.dat` in the same directory as `MOVIEPROBE_MASTER`.
+```
+  parallel bash src/PostProcessing/driverFlowFieldMovie.sh {} 'PROBEMODE' ::: path/to/p*
+```
+4. **Create Plotting File**
 ```python
   python src/PostProcessing/createInputs.py PROBEMODE path/to/movieDNS/masterFile path/to/datFile path/to/store/desired/inputFile
 ```
+5. **Generate Movies**
 3. Divide DNS input in separate files, _z*_, appropriately.
 4. Perform DNS with appropriate number of restarts, so far typically used 400
 5. Divide the **MOVIEPROBE_MASTER** into appropriate number of files, _p*_
