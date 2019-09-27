@@ -50,19 +50,19 @@ def findIndex(df,Bo,Re,alpha,wf):
       (df['w_f']==wf) )
   return df.index[cond].tolist()
 
-def addRow(df,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,AEk):
+def addRow(df,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,AEk,AvgEk):
   df = df.append({'runs_#':runs, 'Bo':Bo, 'Re':Re, 'alpha':alpha, 'w_f':wf,
-    'NtsT':NtsT, 'NT':NT, 'w*':wFFT, 'stdEk': AEk}, ignore_index=True)
+    'NtsT':NtsT, 'NT':NT, 'w*':wFFT, 'stdEk': AEk, 'AvgEk': AvgEk}, ignore_index=True)
   return df
 
-def replaceRow(df,index,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk):
+def replaceRow(df,index,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk,AvgEk):
   df.loc[index,['runs_#','Bo','Re','alpha','w_f','NtsT','NT','w*',
-    'stdEk']]=[runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk]
+    'stdEk','AvgEk']]=[runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk,AvgEk]
   return None
 
 def collectData(DAT_DIR,infiles,outfile):
   df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','NtsT',
-    'NT','w*','stdEk'])
+    'NT','w*','stdEk','AvgEk'])
   if os.path.exists(DAT_DIR+outfile):
     df = pd.read_csv(DAT_DIR+outfile, sep=' ', dtype=object) 
   for infile in glob(DAT_DIR+infiles):
@@ -79,13 +79,14 @@ def collectData(DAT_DIR,infiles,outfile):
         NT        = params[6]
         wFFT      = params[7]
         stdEk     = params[8]
+        AvgEk     = params[9]
       except Exception as ex:
         print('Exception reading line: ', ex)
       filterIndex = findIndex(df,Bo,Re,alpha,wf)
       if filterIndex and runs >= df.loc[filterIndex,'runs_#'].values:
-        replaceRow(df,filterIndex,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk)
+        replaceRow(df,filterIndex,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk,AvgEk)
       elif not filterIndex:
-        df = addRow(df,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk)
+        df = addRow(df,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk,AvgEk)
       f.close()
     os.remove(infile)
 
@@ -370,9 +371,10 @@ def main():
 # Write Data #
 ##############
   #(pkpkAmpEk, relErrEk) = pktopkAmp(Ek)
+  AvgEk = sum(Ek[-NtsT:])*dt/Period
   dataFile = longbn+'.txt' 
-  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','NtsT','NT','w*','stdEk'])
-  df = addRow(df,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,AEk)
+  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','NtsT','NT','w*','stdEk','AvgEk'])
+  df = addRow(df,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,AEk,AvgEk)
   
   with open(os.path.join(DAT_DIR, dataFile),'w') as outfile:
     df.to_csv(outfile,header=True,index=False,sep=' ')
