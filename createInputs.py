@@ -16,23 +16,25 @@ def returnIndex(df,Re,Bo,alpha,wf,field):
 
 def MovieListProbe(inputFile,dataFile,path):
   datadf = pd.read_csv(dataFile,sep=' ',dtype=object) 
-  df = pd.DataFrame(columns=['Re','Bo','alpha','w_f','restartPath','TU',
+  df = pd.DataFrame(columns=['Re','Bo','alpha','w_f','restartPath','NtsT','NT',
     'field','IMA','GMA','pertIMA','pertGMA'])
   fields = ['g','s','x']
   for line in fileinput.FileInput(inputFile,inplace=1):
       linelist    = line.split()
       Re          = linelist[0]
       Bo          = linelist[1]
-      alpha       = linelist[3]
-      wf          = linelist[4]
-      restartPath = linelist[7] # Output, where to place the restarts, not read
-      wFFT        = float(datadf.iloc[findIndex(datadf,Bo,Re,alpha,wf)]['w*'])
-      TU = str(int(round(4*np.pi/wFFT,6)*1e6))+'e-6'
-      line = line.replace(' TU ',' '+TU+' ').strip('\n')
+      alpha       = linelist[2]
+      wf          = linelist[3]
+      restartPath = linelist[6] # Output, where to place the restarts, not read
+      NtsT        = linelist[7]
+      NT          = linelist[8] # Output, where to place the restarts, not read
+#      wFFT        = float(datadf.iloc[findIndex(datadf,Bo,Re,alpha,wf)]['w*'])
+#      TU = str(int(round(4*np.pi/wFFT,6)*1e6))+'e-6'
+#      line = line.replace(' TU ',' '+TU+' ').strip('\n')
       print(line)
       for field in fields:
         df = df.append({'Re':Re, 'Bo':Bo, 'alpha':alpha, 'w_f':wf,
-          'restartPath':restartPath, 'TU':TU, 'field':field,
+          'restartPath':restartPath, 'NtsT':NtsT, 'NT':NT, 'field':field,
           'IMA':'0', 'GMA':'1', 'pertIMA':'2', 'pertGMA':'3'},
            ignore_index=True)
 
@@ -43,7 +45,7 @@ def MovieListProbe(inputFile,dataFile,path):
   return None
 
 def MovieListBounds(inputFile,path):
-  df = pd.DataFrame(columns=['Re','Bo','alpha','w_f','restartPath','TU','field','IMA','GMA','pertIMA','pertGMA'])
+  df = pd.DataFrame(columns=['Re','Bo','alpha','w_f','restartPath','NtsT','NT','field','IMA','GMA','pertIMA','pertGMA'])
   
   with open(inputFile,"r") as file:
     for line in islice(file,3, None): # loops through lines starting at 4th one
@@ -51,13 +53,14 @@ def MovieListBounds(inputFile,path):
       Bo    = parse_token(linelist[0],'Bo')
       Re    = parse_token(linelist[0],'Re')
       alpha = parse_token(linelist[0],'alpha')
-      wf    = parse_token(linelist[0],'w')
-      TU    = parse_token(linelist[0],'TU')
+      wf    = parse_token(linelist[0],'wf')
+      NtsT  = parse_token(linelist[0],'NtsT')
+      NT    = parse_token(linelist[0],'NT')
       field = linelist[0].split('_')[0]
       
       if 'pert' in linelist[0]:
         df = df.append({'Re':Re, 'Bo':Bo, 'alpha':alpha, 'w_f':wf,
-          'restartPath':linelist[1], 'TU':TU, 'field':field,
+          'restartPath':linelist[1], 'NtsT':NtsT, 'NT':NT, 'field':field,
           'pertIMA':linelist[2], 'pertGMA':linelist[4]},
           ignore_index=True)
 
@@ -84,14 +87,29 @@ def replaceRS(inputFile,dataFile):
       Bo          = linelist[1]
       alpha       = linelist[2]
       wf          = linelist[3]
-      (runs, TU)  = tuple(datadf[['runs_#','TU']].iloc[findIndex(datadf,
-          Bo,Re,alpha,wf)].values[0])
+      (runs, NtsT, NT)  = tuple(datadf[['runs_#','NtsT',
+        'NT']].iloc[findIndex(datadf,Bo,Re,alpha,wf)].values[0])
       RSpath   = f'alpha{alpha:s}/runs_{runs:s}/Bo{Bo:s}/' 
-      RSfile   = f'Re{Re:s}_Bo{Bo:s}_alpha{alpha:s}_w{wf:s}_TU{TU:s}_0010' 
+      RSfile   = f'Re{Re:s}_Bo{Bo:s}_alpha{alpha:s}_wf{wf:s}_NtsT{NtsT:s}_NT{NT:s}_0010' 
       line     = line.replace('RS',RSpath+RSfile).strip('\n')
       print(line)
   return None
 
+#def replaceRS(inputFile,dataFile):
+#  datadf = pd.read_csv(dataFile,sep=' ',dtype=object) 
+#  for line in fileinput.FileInput(inputFile,inplace=1):
+#      linelist    = line.split()
+#      Re          = linelist[0]
+#      Bo          = linelist[1]
+#      alpha       = linelist[2]
+#      wf          = linelist[3]
+#      (runs, TU)  = tuple(datadf[['runs_#','TU']].iloc[findIndex(datadf,
+#          Bo,Re,alpha,wf)].values[0])
+#      RSpath   = f'alpha{alpha:s}/runs_{runs:s}/Bo{Bo:s}/' 
+#      RSfile   = f'Re{Re:s}_Bo{Bo:s}_alpha{alpha:s}_w{wf:s}_TU{TU:s}_0010' 
+#      line     = line.replace('RS',RSpath+RSfile).strip('\n')
+#      print(line)
+#  return None
 
 
 if __name__ == '__main__':

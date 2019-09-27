@@ -20,7 +20,7 @@ def long_basename(f):
   return f.split('/')[-1]
 
 def ts_basename(f):
-  return f.split('_TU')[0]
+  return f.split('_NtsT')[0]
 
 def fft_basename(f):
   return f.replace('ts_','fft_')
@@ -50,18 +50,19 @@ def findIndex(df,Bo,Re,alpha,wf):
       (df['w_f']==wf) )
   return df.index[cond].tolist()
 
-def addRow(df,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk,relErrEk):
+def addRow(df,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,AEk):
   df = df.append({'runs_#':runs, 'Bo':Bo, 'Re':Re, 'alpha':alpha, 'w_f':wf,
-    'TU':TU, 'w*':wFFT, 'pkpkAmpEk': pkpkAmpEk, 'relErrEk': relErrEk}, ignore_index=True)
+    'NtsT':NtsT, 'NT':NT, 'w*':wFFT, 'stdEk': AEk}, ignore_index=True)
   return df
 
-def replaceRow(df,index,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk,relErrEk):
-  df.loc[index,['runs_#','Bo','Re','alpha','w_f','TU','w*','pkpkAmpEk','relErrEk']]=[runs,Bo,Re,
-      alpha,wf,TU,wFFT,pkpkAmpEk,relErrEk]
+def replaceRow(df,index,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk):
+  df.loc[index,['runs_#','Bo','Re','alpha','w_f','NtsT','NT','w*',
+    'stdEk']]=[runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk]
   return None
 
 def collectData(DAT_DIR,infiles,outfile):
-  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','TU','w*','pkpkAmpEk','relErrEk'])
+  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','NtsT',
+    'NT','w*','stdEk'])
   if os.path.exists(DAT_DIR+outfile):
     df = pd.read_csv(DAT_DIR+outfile, sep=' ', dtype=object) 
   for infile in glob(DAT_DIR+infiles):
@@ -74,17 +75,17 @@ def collectData(DAT_DIR,infiles,outfile):
         Re        = params[2]
         alpha     = params[3]
         wf        = params[4]
-        TU        = params[5]
-        wFFT      = params[6]
-        pkpkAmpEk = params[7]
-        relErrEk  = params[8]
+        NtsT      = params[5]
+        NT        = params[6]
+        wFFT      = params[7]
+        stdEk     = params[8]
       except Exception as ex:
         print('Exception reading line: ', ex)
       filterIndex = findIndex(df,Bo,Re,alpha,wf)
       if filterIndex and runs >= df.loc[filterIndex,'runs_#'].values:
-        replaceRow(df,filterIndex,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk,relErrEk)
+        replaceRow(df,filterIndex,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk)
       elif not filterIndex:
-        df = addRow(df,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk,relErrEk)
+        df = addRow(df,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk)
       f.close()
     os.remove(infile)
 
@@ -105,26 +106,34 @@ def main():
   tsbn    = ts_basename(longbn)
   fftbn   = fft_basename(tsbn)
   orbitbn = orbit_basename(tsbn)
-  tokens  = ['Re','Bo','alpha','w','TU'] 
+  tokens  = ['Re','Bo','alpha','wf','NtsT','NT'] 
   try:
     values = [ parse_token(longbn,token) for token in tokens ]
     Re   = values[0]
     Bo   = values[1]
     alpha= values[2]
     wf   = values[3]  # Forcing Angular Freq
-    TU   = int(values[4])
+    NtsT = int(values[4])
+    NT   = int(values[5])
     runs = f.split('runs_')[-1].split('/')[0]
   except Exception as ex:
     print('Exception in parse token: ', ex)
-  if TU<0:
-    Nsteps = -TU
-    if wf!=0:
-      dt     = float(1/(wf*Nsteps))
-    elif wf==0:
-      dt = float(dtinput)
+  if float(wf)>0:
+    Period = 2*np.pi/float(wf)
+    dt     = Period/NtsT
+    Nsteps = float(NT*NtsT)
   else:
-    dt = float(dtinput)
-    Nsteps = float(TU/dt)
+    print('wf not greater than 0. wf = ', wf) # COMPLETE THIS!
+
+#  if TU<0:
+#    Nsteps = -TU
+#    if wf!=0:
+#      dt     = float(1/(wf*Nsteps))
+#    elif wf==0:
+#      dt = float(dtinput)
+#  else:
+#    dt = float(dtinput)
+#    Nsteps = float(TU/dt)
 
   title_string = longbn.replace('_',' ')
   t,Ek,Eg,Ew,ur,uw,uz = np.loadtxt(f).T
@@ -240,47 +249,75 @@ def main():
 ####################
   P = 5 # last P% of the time series
   Nperiods = 4
-  if wFFT == 0:
-    M = int(len(t)*P/100)
-  else:
-    TUmin = Nperiods*2*np.pi/wFFT
-    M = ceil(TUmin/dt)
+  if float(wf)>0:
+    M = int(Nperiods*NtsT)
+#  else:                               COMPLETE THIS PART
+#    if wFFT == 0:
+#      M = int(len(t)*P/100)
+#    else:
+#      TUmin = Nperiods*2*np.pi/wFFT
+#      M = ceil(TUmin/dt)
   ticksize = 12
   labelsize = 18
   labelpadx = 3
   labelpady = 10
-  
+  w = 1+float(alpha)*np.cos(float(wf)*t[-M:])
+
   fig, axes = plt.subplots(nrows=2,ncols=3,figsize=(14,9)) # Create canvas & axes
   ## Global Kinetic Energy Time Series
-  axes[0,0].plot(t[-M:],Ek[-M:],'r-')
-  axes[0,0].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
+  axes[0,0].plot(t[-M:]/Period,Ek[-M:],'r-')
+  axes[0,0].set_xlabel('$t/T_f$',fontsize=labelsize,labelpad=labelpadx)
   axes[0,0].set_ylabel('$E_k$',rotation=0,fontsize=labelsize,labelpad=labelpady)
   axes[0,0].tick_params(labelsize=ticksize)
+  ax2 = axes[0,0].twinx()
+  ax2.plot(t[-M:]/Period,w, color='tab:blue')
+  ax2.set_ylabel('$\omega$',rotation=0,fontsize=labelsize,labelpad=labelpady)
+  ax2.tick_params(labelsize=ticksize)
   ## Global Angular Momentum Time Series
-  axes[0,1].plot(t[-M:],Ew[-M:],'r-')
-  axes[0,1].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
+  axes[0,1].plot(t[-M:]/Period,Ew[-M:],'r-')
+  axes[0,1].set_xlabel('$t/T_f$',fontsize=labelsize,labelpad=labelpadx)
   axes[0,1].set_ylabel('$E_{\omega}$',rotation=0,fontsize=labelsize,labelpad=labelpady)
   axes[0,1].tick_params(labelsize=ticksize)
+  ax2 = axes[0,1].twinx()
+  ax2.plot(t[-M:]/Period,w, color='tab:blue')
+  ax2.set_ylabel('$\omega$',rotation=0,fontsize=labelsize,labelpad=labelpady)
+  ax2.tick_params(labelsize=ticksize)
   ## Global Enstrophy Time Series
-  axes[0,2].plot(t[-M:],Eg[-M:],'r-')
-  axes[0,2].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
+  axes[0,2].plot(t[-M:]/Period,Eg[-M:],'r-')
+  axes[0,2].set_xlabel('$t/T_f$',fontsize=labelsize,labelpad=labelpadx)
   axes[0,2].set_ylabel('$E_{\gamma}$',rotation=0,fontsize=labelsize,labelpad=labelpady)
   axes[0,2].tick_params(labelsize=ticksize)
+  ax2 = axes[0,2].twinx()
+  ax2.plot(t[-M:]/Period,w, color='tab:blue')
+  ax2.set_ylabel('$\omega$',rotation=0,fontsize=labelsize,labelpad=labelpady)
+  ax2.tick_params(labelsize=ticksize)
   ## Local Radial Velocity Time Series
-  axes[1,0].plot(t[-M:],ur[-M:],'r-')
-  axes[1,0].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
+  axes[1,0].plot(t[-M:]/Period,ur[-M:],'r-')
+  axes[1,0].set_xlabel('$t/T_f$',fontsize=labelsize,labelpad=labelpadx)
   axes[1,0].set_ylabel('$u_r$',rotation=0,fontsize=labelsize,labelpad=labelpady)
   axes[1,0].tick_params(labelsize=ticksize)
+  ax2 = axes[1,0].twinx()
+  ax2.plot(t[-M:]/Period,w, color='tab:blue')
+  ax2.set_ylabel('$\omega$',rotation=0,fontsize=labelsize,labelpad=labelpady)
+  ax2.tick_params(labelsize=ticksize)
   ## Local Azimuthal Velocity Time Series
-  axes[1,1].plot(t[-M:],uw[-M:],'r-')
-  axes[1,1].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
+  axes[1,1].plot(t[-M:]/Period,uw[-M:],'r-')
+  axes[1,1].set_xlabel('$t/T_f$',fontsize=labelsize,labelpad=labelpadx)
   axes[1,1].set_ylabel(r'$u_{\theta}$',rotation=0,fontsize=labelsize,labelpad=labelpady)
   axes[1,1].tick_params(labelsize=ticksize)
+  ax2 = axes[1,1].twinx()
+  ax2.plot(t[-M:]/Period,w, color='tab:blue')
+  ax2.set_ylabel('$\omega$',rotation=0,fontsize=labelsize,labelpad=labelpady)
+  ax2.tick_params(labelsize=ticksize)
   ## Local Axial Velocity Time Series
-  axes[1,2].plot(t[-M:],uz[-M:],'r-')
-  axes[1,2].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
+  axes[1,2].plot(t[-M:]/Period,uz[-M:],'r-')
+  axes[1,2].set_xlabel('$t/T_f$',fontsize=labelsize,labelpad=labelpadx)
   axes[1,2].set_ylabel('$u_z$',rotation=0,fontsize=labelsize,labelpad=labelpady)
   axes[1,2].tick_params(labelsize=ticksize)
+  ax2 = axes[1,2].twinx()
+  ax2.plot(t[-M:]/Period,w, color='tab:blue')
+  ax2.set_ylabel('$\omega$',rotation=0,fontsize=labelsize,labelpad=labelpady)
+  ax2.tick_params(labelsize=ticksize)
   
   fig.tight_layout()
   fig.savefig(f'{FIG_DIR:s}{tsbn:s}.png')
@@ -332,10 +369,10 @@ def main():
 ##############
 # Write Data #
 ##############
-  (pkpkAmpEk, relErrEk) = pktopkAmp(Ek)
+  #(pkpkAmpEk, relErrEk) = pktopkAmp(Ek)
   dataFile = longbn+'.txt' 
-  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','TU','w*','pkpkAmpEk','relErrEk'])
-  df = addRow(df,runs,Bo,Re,alpha,wf,TU,wFFT,pkpkAmpEk,relErrEk)
+  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','NtsT','NT','w*','stdEk'])
+  df = addRow(df,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,AEk)
   
   with open(os.path.join(DAT_DIR, dataFile),'w') as outfile:
     df.to_csv(outfile,header=True,index=False,sep=' ')
