@@ -249,47 +249,75 @@ def main():
 ####################
   P = 5 # last P% of the time series
   Nperiods = 4
-  if wFFT == 0:
-    M = int(len(t)*P/100)
-  else:
-    TUmin = Nperiods*2*np.pi/wFFT
-    M = ceil(TUmin/dt)
+  if float(wf)>0:
+    M = int(Nperiods*NtsT)
+#  else:                               COMPLETE THIS PART
+#    if wFFT == 0:
+#      M = int(len(t)*P/100)
+#    else:
+#      TUmin = Nperiods*2*np.pi/wFFT
+#      M = ceil(TUmin/dt)
   ticksize = 12
   labelsize = 18
   labelpadx = 3
   labelpady = 10
-  
+  w = 1+float(alpha)*np.cos(float(wf)*t[-M:])
+
   fig, axes = plt.subplots(nrows=2,ncols=3,figsize=(14,9)) # Create canvas & axes
   ## Global Kinetic Energy Time Series
-  axes[0,0].plot(t[-M:],Ek[-M:],'r-')
-  axes[0,0].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
+  axes[0,0].plot(t[-M:]/Period,Ek[-M:],'r-')
+  axes[0,0].set_xlabel('$t/T_f$',fontsize=labelsize,labelpad=labelpadx)
   axes[0,0].set_ylabel('$E_k$',rotation=0,fontsize=labelsize,labelpad=labelpady)
   axes[0,0].tick_params(labelsize=ticksize)
+  ax2 = axes[0,0].twinx()
+  ax2.plot(t[-M:]/Period,w, color='tab:blue')
+  ax2.set_ylabel('$\omega$',rotation=0,fontsize=labelsize,labelpad=labelpady)
+  ax2.tick_params(labelsize=ticksize)
   ## Global Angular Momentum Time Series
-  axes[0,1].plot(t[-M:],Ew[-M:],'r-')
-  axes[0,1].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
+  axes[0,1].plot(t[-M:]/Period,Ew[-M:],'r-')
+  axes[0,1].set_xlabel('$t/T_f$',fontsize=labelsize,labelpad=labelpadx)
   axes[0,1].set_ylabel('$E_{\omega}$',rotation=0,fontsize=labelsize,labelpad=labelpady)
   axes[0,1].tick_params(labelsize=ticksize)
+  ax2 = axes[0,1].twinx()
+  ax2.plot(t[-M:]/Period,w, color='tab:blue')
+  ax2.set_ylabel('$\omega$',rotation=0,fontsize=labelsize,labelpad=labelpady)
+  ax2.tick_params(labelsize=ticksize)
   ## Global Enstrophy Time Series
-  axes[0,2].plot(t[-M:],Eg[-M:],'r-')
-  axes[0,2].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
+  axes[0,2].plot(t[-M:]/Period,Eg[-M:],'r-')
+  axes[0,2].set_xlabel('$t/T_f$',fontsize=labelsize,labelpad=labelpadx)
   axes[0,2].set_ylabel('$E_{\gamma}$',rotation=0,fontsize=labelsize,labelpad=labelpady)
   axes[0,2].tick_params(labelsize=ticksize)
+  ax2 = axes[0,2].twinx()
+  ax2.plot(t[-M:]/Period,w, color='tab:blue')
+  ax2.set_ylabel('$\omega$',rotation=0,fontsize=labelsize,labelpad=labelpady)
+  ax2.tick_params(labelsize=ticksize)
   ## Local Radial Velocity Time Series
-  axes[1,0].plot(t[-M:],ur[-M:],'r-')
-  axes[1,0].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
+  axes[1,0].plot(t[-M:]/Period,ur[-M:],'r-')
+  axes[1,0].set_xlabel('$t/T_f$',fontsize=labelsize,labelpad=labelpadx)
   axes[1,0].set_ylabel('$u_r$',rotation=0,fontsize=labelsize,labelpad=labelpady)
   axes[1,0].tick_params(labelsize=ticksize)
+  ax2 = axes[1,0].twinx()
+  ax2.plot(t[-M:]/Period,w, color='tab:blue')
+  ax2.set_ylabel('$\omega$',rotation=0,fontsize=labelsize,labelpad=labelpady)
+  ax2.tick_params(labelsize=ticksize)
   ## Local Azimuthal Velocity Time Series
-  axes[1,1].plot(t[-M:],uw[-M:],'r-')
-  axes[1,1].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
+  axes[1,1].plot(t[-M:]/Period,uw[-M:],'r-')
+  axes[1,1].set_xlabel('$t/T_f$',fontsize=labelsize,labelpad=labelpadx)
   axes[1,1].set_ylabel(r'$u_{\theta}$',rotation=0,fontsize=labelsize,labelpad=labelpady)
   axes[1,1].tick_params(labelsize=ticksize)
+  ax2 = axes[1,1].twinx()
+  ax2.plot(t[-M:]/Period,w, color='tab:blue')
+  ax2.set_ylabel('$\omega$',rotation=0,fontsize=labelsize,labelpad=labelpady)
+  ax2.tick_params(labelsize=ticksize)
   ## Local Axial Velocity Time Series
-  axes[1,2].plot(t[-M:],uz[-M:],'r-')
-  axes[1,2].set_xlabel('$t$',fontsize=labelsize,labelpad=labelpadx)
+  axes[1,2].plot(t[-M:]/Period,uz[-M:],'r-')
+  axes[1,2].set_xlabel('$t/T_f$',fontsize=labelsize,labelpad=labelpadx)
   axes[1,2].set_ylabel('$u_z$',rotation=0,fontsize=labelsize,labelpad=labelpady)
   axes[1,2].tick_params(labelsize=ticksize)
+  ax2 = axes[1,2].twinx()
+  ax2.plot(t[-M:]/Period,w, color='tab:blue')
+  ax2.set_ylabel('$\omega$',rotation=0,fontsize=labelsize,labelpad=labelpady)
+  ax2.tick_params(labelsize=ticksize)
   
   fig.tight_layout()
   fig.savefig(f'{FIG_DIR:s}{tsbn:s}.png')
