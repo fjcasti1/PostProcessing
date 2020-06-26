@@ -15,6 +15,7 @@ def main():
   DAT_FILE = f'collectiveData.dat'
   FIG_DIR = f'figL2/'
   labelsize = 15
+  titlesize = 16
   majorticksize = 14
   minorticksize = 12
 
@@ -37,13 +38,13 @@ def main():
       axes[1].plot(w,stdEk,'-s',label=r'$\alpha$ = '+f'{alpha:s}')
 
     axes[0].legend()
-    axes[0].set_title(f'Bo = {Bo:s}, Re = {Re:s}')
+    axes[0].set_title(f'Bo = {Bo:s}, Re = {Re:s}', fontsize=titlesize)
     axes[0].ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     axes[0].ticklabel_format(style='sci', axis='y', scilimits=(0,0))
     axes[0].tick_params(axis='both',which='major', labelsize=majorticksize)
     axes[0].tick_params(axis='both',which='minor', labelsize=minorticksize)
     axes[1].legend()
-    axes[1].set_title(f'Bo = {Bo:s}, Re = {Re:s}')
+    axes[1].set_title(f'Bo = {Bo:s}, Re = {Re:s}', fontsize=titlesize)
     axes[1].ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     axes[1].ticklabel_format(style='sci', axis='y', scilimits=(0,0))
     axes[1].tick_params(axis='both',which='major', labelsize=majorticksize)
