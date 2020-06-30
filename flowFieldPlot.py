@@ -4,7 +4,7 @@ from cheb import *
 from numpy import *
 from pylab import *
 from glob import glob
-from matplotlib import rcParams 
+from matplotlib import rcParams
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import multiprocessing as mp
@@ -106,7 +106,7 @@ def get_files_to_plot():
     frecs.append(drec)
   drecs = frecs
   drecs.sort()
-  return drecs 
+  return drecs
 
 def isPlotted(f):
   plotted = False
@@ -154,7 +154,7 @@ def reader(f,fmean=0,label=''):
     indz = abs(z-EPS*Lz).argmin()
     indr = abs(r-EPS*Lr).argmin()  #
     indr = indz = 30
-    ima = abs(Q[indz:-indz,indr:-indr]).max() 
+    ima = abs(Q[indz:-indz,indr:-indr]).max()
             # ->  Only works for equispaced grids, if not use indmin and indmax
     fbase = get_figname(os.path.basename(f),REQ_FIELD,label)
 #    probe_res = ('{:s}' + 3*' {:+21.7e}'+'\n').format(fbase,ima,gma,gma/ima)
