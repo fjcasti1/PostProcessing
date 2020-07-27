@@ -1,5 +1,5 @@
 import sys,os,errno
-from hellaPy import *
+from myPlots import *
 from cheb import *
 from numpy import *
 from pylab import *
@@ -13,7 +13,7 @@ from functools import partial
 rcParams['text.usetex'] = True
 
 mkl_set_num_threads(1)
-NPROCS=8
+NPROCS=4
 
 CONTOUR_OPTIMIZING = True
 CONTOUR_OPTIMIZING = False
@@ -29,17 +29,17 @@ if len(sys.argv)==9 and sys.argv[8]=="PROBEMODE":
   PROBE_MODE = True
 else:
   PROBE_MODE = False
-autoOUT_DIR='movies/'
+autoOUT_DIR='fig/'
 EPS=0.15  # Percentage of domain that is left for each wall
 
 #OUT_FILE_TYPE = OREC = orec  = 'pdf'
 OUT_FILE_TYPE = 'png'
 
-#                      # Paint Domain | Paint Range
-ALL_CMAP     = mycm19  #    [-a, a]   | dark blue to dark red
-NEG_EXT_CMAP = myBlues #    [-b,-a]   | dark blue, blue
-INT_CMAP     = mycm15  #    [-a, a]   | blue,white,red
-POS_EXT_CMAP = myReds  #    [ c, d]   | red, dark red
+##                      # Paint Domain | Paint Range
+#ALL_CMAP     = mycm19  #    [-a, a]   | dark blue to dark red
+#NEG_EXT_CMAP = myBlues #    [-b,-a]   | dark blue, blue
+#INT_CMAP     = mycm15  #    [-a, a]   | blue,white,red
+#POS_EXT_CMAP = myReds  #    [ c, d]   | red, dark red
 
 # TOLERANCE = 1e-8
 
@@ -60,13 +60,21 @@ Z,R = meshgrid(z,r,indexing='ij')
 
 def create_outdir(bn,outdir):
   if outdir=='auto':
-    tokens = ['alpha','Bo','Re','f']
-    values = [parse_token(bn,token) for token in tokens]
-    alpha = values[0]
-    Bo = values[1]
-    Re = values[2]
-    f  = values[3]
-    outdir=(f'{autoOUT_DIR:s}alpha{alpha:s}/Bo{Bo:s}')
+    tokens  = ['Bo','Re','Ro','wf','Gamma','eta','NtsT','NT']
+    try:
+      values = [ parse_token(longbn,token) for token in tokens ]
+      Bo   = values[0]
+      Re   = values[1]
+      Ro   = values[2]
+      wf   = values[3]  # Forcing Angular Freq
+      Gamma= values[4]
+      eta  = values[5]
+      NtsT = int(values[6])
+      NT   = int(values[7])
+      runs = f.split('runs_')[-1].split('/')[0]
+    except Exception as ex:
+      print('Exception in parse token: ', ex)
+    outdir=(f'{autoOUT_DIR:s}')
     print('\n')
     print(f'{"":=<42s}')
     print('OUTPUT DIRECTORY GENERATED AUTOMATICALLY')
@@ -184,27 +192,37 @@ def reader(f,fmean=0,label=''):
 ###  )
 ###  return None
 
-def mycf(X1,X2,Q,out_fig,ima=1,gma=400,fn=10,ax=0.):
-  f,a = no_ax_fax(k=fn,fs_base=6)
+def mycf(X,Y,field,ima=None,gma=None,fn=1,fb=4,fgamma=1,Nell=33,Nred=3):
+  if not gma: #TODO: Needs to find interior and global maximum, ima wrong atm
+      gma = abs(field).max()
+  if not ima:
+      ima = abs(field).max()
+  f,a = no_ax_fig(fn,fb,fgamma)
   if ima == gma:
     gma = gma*1.0001
-  mycontourf(X1,X2,Q,levels=linspace(-gma,-ima,3 ),cmap=NEG_EXT_CMAP)
-  mycontourf(X1,X2,Q,levels=linspace(-ima, ima,15),cmap=INT_CMAP    )
-  mycontourf(X1,X2,Q,levels=linspace( ima, gma,3 ),cmap=POS_EXT_CMAP)
-  if Q.min() < 0 and Q.max() > 0:
-    contour(X1,X2,Q,levels=[0],linestyles='-',colors='#777777')
-  savefig(OUT_DIR+'/'+out_fig)
+  ell = pylab.linspace(-ima,ima,Nell)
+  red = pylab.linspace(ima,gma,Nred)
+  blu = -red[::-1]
+  f,a = no_ax_fig(fn,fb,fgamma)
+  mycontourf(X,Y,field,lc='#777777',lw=0.01,levels=blu,cmap=myBlues)
+  mycontourf(X,Y,field,lc='#777777',lw=0.01,levels=ell,cmap=mycm15)
+  mycontourf(X,Y,field,lc='#777777',lw=0.01,levels=red,cmap=myReds)
+  if field.min() < 0 and field.max() > 0:
+      contour(X,Y,field,levels=[0],linestyles='-',colors='#777777')
   return None
 
 def main(f,fmean=0,label='',mode='normal'):
   data  = reader(f,fmean,label)
+  Gamma = float(parse_token(f,"Gamma"))
   if not PROBE_MODE:
     if (mode=='normal'):
-      mycf(Z,R,transpose(data[REQ_FIELD]-fmean),\
-          get_figname(os.path.basename(f),REQ_FIELD,label),ima=IMA,gma=GMA)
+      mycf(Z,R,transpose(data[REQ_FIELD]),ima=IMA,gma=GMA,fgamma=Gamma)
     elif mode=='perturbation':
-      mycf(Z,R,transpose(data[REQ_FIELD]-fmean),\
-          get_figname(os.path.basename(f),REQ_FIELD,label),ima=pertIMA,gma=pertGMA)
+      mycf(Z,R,transpose(data[REQ_FIELD]-fmean),ima=pertIMA,gma=pertGMA)
+
+  out_fig = get_figname(os.path.basename(f),REQ_FIELD,label)
+  savefig(OUT_DIR+'/'+out_fig)
+  plt.close()
   return data[REQ_FIELD]#,data['Z'],data['R']
 
 if __name__ == '__main__':
@@ -220,8 +238,10 @@ if __name__ == '__main__':
       D = array(D)
       E = mean(D,axis=0)
       if not PROBE_MODE:
-        mycf(Z,R,transpose(E),get_figname(os.path.basename(drecs[0].replace('_0001','')),\
-                                          REQ_FIELD,'_mean'),ima=IMA,gma=GMA)
+        mycf(Z,R,transpose(E),ima=IMA,gma=GMA)
+        out_fig = get_figname(os.path.basename(drecs[0].replace('_0001','')),REQ_FIELD,'_mean')
+        savefig(OUT_DIR+'/'+out_fig)
+        plt.close()
       if not (pertIMA==0 and pertGMA==0):
         main2 = partial(main,fmean=E,label='_pert',mode='perturbation')
         D = pool.map(main2,drecs)
