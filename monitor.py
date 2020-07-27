@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import axes3d
 from scipy.signal import blackman as blk
 from glob import glob
-import pandas as pd 
+import pandas as pd
 
 
 def fig_dir(f):
@@ -45,26 +45,26 @@ def pktopkAmp(S,M=0,F=0.9):
   relErr = ((np.std(S[-M:][peaks])**2 + np.std(S[-M:][valleys])**2)**0.5)/pkpkAmp
   return (pkpkAmp, relErr)
 
-def findIndex(df,Bo,Re,alpha,wf):
-  cond = ( (df['Re']==Re) & (df['Bo']==Bo) & (df['alpha']==alpha) &
+def findIndex(df,Bo,Re,Ro,wf):
+  cond = ( (df['Re']==Re) & (df['Bo']==Bo) & (df['Ro']==Ro) &
       (df['w_f']==wf) )
   return df.index[cond].tolist()
 
-def addRow(df,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,AEk,AvgEk):
-  df = df.append({'runs_#':runs, 'Bo':Bo, 'Re':Re, 'alpha':alpha, 'w_f':wf,
+def addRow(df,runs,Bo,Re,Ro,wf,NtsT,NT,wFFT,AEk,AvgEk):
+  df = df.append({'runs_#':runs, 'Bo':Bo, 'Re':Re, 'Ro':Ro, 'w_f':wf,
     'NtsT':NtsT, 'NT':NT, 'w*':wFFT, 'stdEk': AEk, 'AvgEk': AvgEk}, ignore_index=True)
   return df
 
-def replaceRow(df,index,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk,AvgEk):
-  df.loc[index,['runs_#','Bo','Re','alpha','w_f','NtsT','NT','w*',
-    'stdEk','AvgEk']]=[runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk,AvgEk]
+def replaceRow(df,index,runs,Bo,Re,Ro,wf,NtsT,NT,wFFT,stdEk,AvgEk):
+  df.loc[index,['runs_#','Bo','Re','Ro','w_f','NtsT','NT','w*',
+    'stdEk','AvgEk']]=[runs,Bo,Re,Ro,wf,NtsT,NT,wFFT,stdEk,AvgEk]
   return None
 
 def collectData(DAT_DIR,infiles,outfile):
-  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','NtsT',
+  df = pd.DataFrame(columns=['runs_#','Bo','Re','Ro','w_f','NtsT',
     'NT','w*','stdEk','AvgEk'])
   if os.path.exists(DAT_DIR+outfile):
-    df = pd.read_csv(DAT_DIR+outfile, sep=' ', dtype=object) 
+    df = pd.read_csv(DAT_DIR+outfile, sep=' ', dtype=object)
   for infile in glob(DAT_DIR+infiles):
     with open(infile,'r') as f:
       f.readline()
@@ -73,7 +73,7 @@ def collectData(DAT_DIR,infiles,outfile):
         runs      = params[0]
         Bo        = params[1]
         Re        = params[2]
-        alpha     = params[3]
+        Ro        = params[3]
         wf        = params[4]
         NtsT      = params[5]
         NT        = params[6]
@@ -82,11 +82,11 @@ def collectData(DAT_DIR,infiles,outfile):
         AvgEk     = params[9]
       except Exception as ex:
         print('Exception reading line: ', ex)
-      filterIndex = findIndex(df,Bo,Re,alpha,wf)
+      filterIndex = findIndex(df,Bo,Re,Ro,wf)
       if filterIndex and runs >= df.loc[filterIndex,'runs_#'].values:
-        replaceRow(df,filterIndex,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk,AvgEk)
+        replaceRow(df,filterIndex,runs,Bo,Re,Ro,wf,NtsT,NT,wFFT,stdEk,AvgEk)
       elif not filterIndex:
-        df = addRow(df,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,stdEk,AvgEk)
+        df = addRow(df,runs,Bo,Re,Ro,wf,NtsT,NT,wFFT,stdEk,AvgEk)
       f.close()
     os.remove(infile)
 
@@ -94,12 +94,12 @@ def collectData(DAT_DIR,infiles,outfile):
     df.to_csv(outfile,header=True,index=False,sep=' ')
     outfile.close()
   return None
-  
+
 def main():
   f       = sys.argv[1]
   res_dir = sys.argv[2]
   dtinput = sys.argv[3]
-  
+
   FIG_DIR = fig_dir(res_dir)
   DAT_DIR = f'dat/'
 
@@ -107,24 +107,28 @@ def main():
   tsbn    = ts_basename(longbn)
   fftbn   = fft_basename(tsbn)
   orbitbn = orbit_basename(tsbn)
-  tokens  = ['Re','Bo','alpha','wf','NtsT','NT'] 
+  tokens  = ['Bo','Re','Ro','wf','Gamma','eta','NtsT','NT']
   try:
     values = [ parse_token(longbn,token) for token in tokens ]
-    Re   = values[0]
-    Bo   = values[1]
-    alpha= values[2]
+    Bo   = values[0]
+    Re   = values[1]
+    Ro   = values[2]
     wf   = values[3]  # Forcing Angular Freq
-    NtsT = int(values[4])
-    NT   = int(values[5])
+    Gamma= values[4]
+    eta  = values[5]
+    NtsT = int(values[6])
+    NT   = int(values[7])
     runs = f.split('runs_')[-1].split('/')[0]
   except Exception as ex:
     print('Exception in parse token: ', ex)
   if float(wf)>0:
     Period = 2*np.pi/float(wf)
     dt     = Period/NtsT
-    Nsteps = float(NT*NtsT)
+    #Nsteps = float(NT*NtsT)
   else:
     print('wf not greater than 0. wf = ', wf) # COMPLETE THIS!
+    dt = float(dtinput)
+    Period = NtsT*NT*dt
 
 #  if TU<0:
 #    Nsteps = -TU
@@ -148,33 +152,33 @@ def main():
   M = int(len(Ek)*P/100)
   T = M*dt      # Period ??
   w0  = 2*np.pi/T  # Natural Frequency??
-  
+
   AEk = Ek[-M:].std() # Amplitud of Oscillation
   fftEk  = abs(fft(detrend(Ek[-M:])*blk(M))[:M//2]) # FFT with Blackman filter [array]
   wMEk = w0*fftEk.argmax() # Compute dominant frequency
-  
+
   AEg = Eg[-M:].std() # Amplitud of Oscillation
   fftEg  = abs(fft(detrend(Eg[-M:])*blk(M))[:M//2]) # FFT with Blackman filter [array]
   wMEg = w0*fftEg.argmax() # Compute dominant frequency
-  
+
   AEw = Ew[-M:].std() # Amplitud of Oscillation
   fftEw  = abs(fft(detrend(Ew[-M:])*blk(M))[:M//2]) # FFT with Blackman filter [array]
   wMEw = w0*fftEw.argmax() # Compute dominant frequency
-  
+
   Aur = ur[-M:].std() # Amplitud of Oscillation
   fftur  = abs(fft(detrend(ur[-M:])*blk(M))[:M//2]) # FFT with Blackman filter [array]
   wMur = w0*fftur.argmax() # Compute dominant frequency
-  
+
   Auw = uw[-M:].std() # Amplitud of Oscillation
   fftuw  = abs(fft(detrend(uw[-M:])*blk(M))[:M//2]) # FFT with Blackman filter [array]
   wMuw = w0*fftuw.argmax() # Compute dominant frequency
-  
+
   Auz = uz[-M:].std() # Amplitud of Oscillation
   fftuz  = abs(fft(detrend(uz[-M:])*blk(M))[:M//2]) # FFT with Blackman filter [array]
   wMuz = w0*fftuz.argmax() # Compute dominant frequency
 
   wFFT = min([wMEk,wMEg,wMEw,wMur,wMuw,wMuz])
-  
+
   wLim = 2
   AnotationSize = 15
   xPosText = 0.25
@@ -188,7 +192,7 @@ def main():
   ## Global Kinetic Energy FFT
   axes[0,0].semilogy(w0*np.arange(len(fftEk)),fftEk,'k-')
   axes[0,0].annotate('$\omega^*$ = {:f}'.format(wMEk), xy=(wMEk, fftEk.max()),
-          xycoords='data', xytext=(xPosText,yPosText), textcoords='axes fraction', 
+          xycoords='data', xytext=(xPosText,yPosText), textcoords='axes fraction',
           size=AnotationSize, arrowprops=dict(arrowstyle="->"))
   axes[0,0].set_xlabel('$\omega$',fontsize=labelsize,labelpad=labelpadx)
   axes[0,0].set_ylabel('$|\hat{E}_k|$',rotation=0,fontsize=labelsize,labelpad=labelpady)
@@ -197,7 +201,7 @@ def main():
   ## Global Angular Momentum FFT
   axes[0,1].semilogy(w0*np.arange(len(fftEw)),fftEw,'k-')
   axes[0,1].annotate('$\omega^*$ = {:f}'.format(wMEw), xy=(wMEw, fftEw.max()),
-          xycoords='data', xytext=(xPosText,yPosText), textcoords='axes fraction', 
+          xycoords='data', xytext=(xPosText,yPosText), textcoords='axes fraction',
           size=AnotationSize, arrowprops=dict(arrowstyle="->"))
   axes[0,1].set_xlabel('$\omega$',fontsize=labelsize,labelpad=labelpadx)
   axes[0,1].set_ylabel('$|\hat{E}_w|$',rotation=0,fontsize=labelsize,labelpad=labelpady)
@@ -206,7 +210,7 @@ def main():
   ## Global Enstrophy FFT
   axes[0,2].semilogy(w0*np.arange(len(fftEg)),fftEg,'k-')
   axes[0,2].annotate('$\omega^*$ = {:f}'.format(wMEg), xy=(wMEg, fftEk.max()),
-          xycoords='data', xytext=(xPosText,yPosText), textcoords='axes fraction', 
+          xycoords='data', xytext=(xPosText,yPosText), textcoords='axes fraction',
           size=AnotationSize, arrowprops=dict(arrowstyle="->"))
   axes[0,2].set_xlabel('$\omega$',fontsize=labelsize,labelpad=labelpadx)
   axes[0,2].set_ylabel('$|\hat{E}_{\gamma}|$',rotation=0,fontsize=labelsize,labelpad=labelpady)
@@ -215,7 +219,7 @@ def main():
   ## Local Radial Velocity FFT
   axes[1,0].semilogy(w0*np.arange(len(fftur)),fftur,'k-')
   axes[1,0].annotate('$\omega^*$ = {:f}'.format(wMur), xy=(wMur, fftur.max()),
-          xycoords='data', xytext=(xPosText,yPosText), textcoords='axes fraction', 
+          xycoords='data', xytext=(xPosText,yPosText), textcoords='axes fraction',
           size=AnotationSize, arrowprops=dict(arrowstyle="->"))
   axes[1,0].set_xlabel('$\omega$',fontsize=labelsize,labelpad=labelpadx)
   axes[1,0].set_ylabel('$|\hat{u}_r|$',rotation=0,fontsize=labelsize,labelpad=labelpady)
@@ -224,7 +228,7 @@ def main():
   ## Local Azimuthal Velocity FFT
   axes[1,1].semilogy(w0*np.arange(len(fftuw)),fftuw,'k-')
   axes[1,1].annotate('$\omega^*$ = {:f}'.format(wMuw), xy=(wMuw, fftuw.max()),
-          xycoords='data', xytext=(xPosText,yPosText), textcoords='axes fraction', 
+          xycoords='data', xytext=(xPosText,yPosText), textcoords='axes fraction',
           size=AnotationSize, arrowprops=dict(arrowstyle="->"))
   axes[1,1].set_xlabel('$\omega$',fontsize=labelsize,labelpad=labelpadx)
   axes[1,1].set_ylabel(r'$|\hat{u}_{\theta}|$',rotation=0,fontsize=labelsize,labelpad=labelpady)
@@ -233,13 +237,13 @@ def main():
   ## Local Axial Velocity FFT
   axes[1,2].semilogy(w0*np.arange(len(fftuz)),fftuz,'k-')
   axes[1,2].annotate('$\omega^*$ = {:f}'.format(wMuz), xy=(wMuz, fftuz.max()),
-          xycoords='data', xytext=(xPosText,yPosText), textcoords='axes fraction', 
+          xycoords='data', xytext=(xPosText,yPosText), textcoords='axes fraction',
           size=AnotationSize, arrowprops=dict(arrowstyle="->"))
   axes[1,2].set_xlabel('$\omega$',fontsize=labelsize,labelpad=labelpadx)
   axes[1,2].set_ylabel('$|\hat{u}_z|$',rotation=0,fontsize=labelsize,labelpad=labelpady)
   axes[1,2].set_xlim(0,wLim)
   axes[1,2].tick_params(labelsize=ticksize)
-  
+
   fig.tight_layout()
   savefig(f'{FIG_DIR:s}{fftbn:s}.png')
   plt.close()
@@ -262,7 +266,7 @@ def main():
   labelsize = 18
   labelpadx = 3
   labelpady = 10
-  w = 1+float(alpha)*np.cos(float(wf)*t[-M:])
+  w = 1+float(Ro)*np.cos(float(wf)*t[-M:])
 
   fig, axes = plt.subplots(nrows=2,ncols=3,figsize=(14,9)) # Create canvas & axes
   ## Global Kinetic Energy Time Series
@@ -319,7 +323,7 @@ def main():
   ax2.plot(t[-M:]/Period,w, color='tab:blue')
   ax2.set_ylabel('$\omega$',rotation=0,fontsize=labelsize,labelpad=labelpady)
   ax2.tick_params(labelsize=ticksize)
-  
+
   fig.tight_layout()
   fig.savefig(f'{FIG_DIR:s}{tsbn:s}.png')
   plt.close()
@@ -335,7 +339,7 @@ def main():
   labelpadx = 0
   labelpady = 0
   labelpadz = 0
-  
+
   fig = plt.figure(figsize=(14,10)) # Create canvas
   ## Plot Global Orbit
   for j in range(1,4):
@@ -361,7 +365,7 @@ def main():
       ax.set_zlabel('$u_z$',rotation=0,fontsize=labelsize,labelpad=labelpadz)
       ax.tick_params(labelsize=ticksize)
       ax.view_init(elevation,theta0+(j-1)*dtheta)
-      
+
   fig.tight_layout()
   savefig(f'{FIG_DIR:s}{orbitbn:s}.png')
   plt.close()
@@ -372,13 +376,13 @@ def main():
 ##############
   #(pkpkAmpEk, relErrEk) = pktopkAmp(Ek)
   AvgEk = sum(Ek[-NtsT:])*dt/Period
-  dataFile = longbn+'.txt' 
-  df = pd.DataFrame(columns=['runs_#','Bo','Re','alpha','w_f','NtsT','NT','w*','stdEk','AvgEk'])
-  df = addRow(df,runs,Bo,Re,alpha,wf,NtsT,NT,wFFT,AEk,AvgEk)
-  
-  with open(os.path.join(DAT_DIR, dataFile),'w') as outfile:
-    df.to_csv(outfile,header=True,index=False,sep=' ')
-    outfile.close()
+  dataFile = longbn+'.txt'
+  df = pd.DataFrame(columns=['runs_#','Bo','Re','Ro','w_f','NtsT','NT','w*','stdEk','AvgEk'])
+  df = addRow(df,runs,Bo,Re,Ro,wf,NtsT,NT,wFFT,AEk,AvgEk)
+
+#  with open(os.path.join(DAT_DIR, dataFile),'w') as outfile:
+#    df.to_csv(outfile,header=True,index=False,sep=' ')
+#    outfile.close()
 
   return None
 
