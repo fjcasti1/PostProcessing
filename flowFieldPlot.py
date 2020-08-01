@@ -129,14 +129,14 @@ def read_field(fheader,udt,pdt,pcount=1):
   return (s,x,g)
 
 def reader(f,fmean=0,label=''):
-  hdt = dtype('(4)i4, (4)f8, (2)i4, (8)f8, i4') # header data type
+  hdt = dtype('(4)i4, (4)f8, (2)i4, (7)f8, i4') # header data type
   pdt = dtype('i4') # padding data type
   with open(f,'rb') as fh:
     header= fromfile(fh,dtype=hdt,count=1)
     Nz = header[0][0][1]  # M=Nz, N=Nr
     Nr = header[0][0][2]  # M=Nz, N=Nr
-    Hasp  = header[0][3][6]
-    Rasp  = header[0][3][7]
+    Hasp  = header[0][3][5]
+    Rasp  = header[0][3][6]
     t   = header[0][1][3]
     udt = dtype('({:d},{:d}) f8'.format(Nz,Nr))
     s, x, g = read_field(fh,udt,pdt)
